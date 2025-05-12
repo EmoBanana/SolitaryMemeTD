@@ -10,9 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@civic/auth": "^0.5.4",
+    "@civic/auth-web3": "^0.5.8",
     "@coral-xyz/anchor": "^0.31.1",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
+    "@reown/appkit": "^1.7.4",
+    "@reown/appkit-adapter-solana": "^1.7.4",
+    "@solana/wallet-adapter-backpack": "^0.1.14",
+    "@solana/wallet-adapter-base": "^0.9.26",
     "@solana/wallet-adapter-react": "^0.15.38",
     "@solana/wallet-adapter-react-ui": "^0.9.38",
     "@solana/wallet-adapter-wallets": "^0.19.36",
@@ -21,6 +27,7 @@
     "@types/three": "^0.176.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-router-dom": "^7.6.0",
     "three": "^0.176.0"
   },
   "devDependencies": {
