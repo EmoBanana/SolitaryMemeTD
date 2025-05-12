@@ -1,12 +1,33 @@
 import React from "react";
+import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 
 interface LandingPageProps {
-  onPlayClick: () => void;
+  onWalletConnect: () => void;
 }
 
-const LandingPage = ({ onPlayClick }: LandingPageProps) => {
-  const [isPlayHovering, setIsPlayHovering] = React.useState(false);
-  const [isTrailerHovering, setIsTrailerHovering] = React.useState(false);
+const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
+  const [isPlayHovering, setIsPlayHovering] = React.useState<boolean>(false);
+  const [isTrailerHovering, setIsTrailerHovering] =
+    React.useState<boolean>(false);
+  const appKit = useAppKit();
+  const { isConnected } = useAppKitAccount();
+
+  // Monitor wallet connection state and navigate when connected
+  React.useEffect(() => {
+    if (isConnected) {
+      onWalletConnect();
+    }
+  }, [isConnected, onWalletConnect]);
+
+  const handlePlayClick = async () => {
+    try {
+      // Just open the wallet dialog but don't redirect yet
+      await appKit.open();
+      // Navigation will happen in the useEffect when isConnected becomes true
+    } catch (error) {
+      console.error("Wallet connection failed", error);
+    }
+  };
 
   const handleWatchTrailer = () => {
     window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
@@ -67,17 +88,20 @@ const LandingPage = ({ onPlayClick }: LandingPageProps) => {
       </div>
 
       {/* Navigation bar */}
-      <header className="relative z-40 pt-6 px-8 flex justify-between items-center">
+      <header className="relative z-40 pt-6 px-14 flex justify-between items-center">
         <div className="flex items-center">
           <h2
-            className="text-2xl font-bold text-white"
+            className="text-[2.4rem] font-bold text-white"
             style={{ fontFamily: "'Jersey20', sans-serif" }}
           >
             SMTD
           </h2>
         </div>
 
-        <nav className="flex space-x-8">
+        <nav
+          className="flex space-x-8 text-[1.6rem] font-bold"
+          style={{ fontFamily: "'Jersey20', sans-serif" }}
+        >
           <a
             href="#"
             className="text-gray-300 hover:text-white transition-colors"
@@ -105,14 +129,17 @@ const LandingPage = ({ onPlayClick }: LandingPageProps) => {
         </nav>
 
         <div className="flex space-x-4">
-          <button className="px-4 py-2 bg-yellow-500 text-indigo-900 font-semibold rounded-lg hover:bg-yellow-400 transition-colors">
+          <button
+            className="px-4 py-2 bg-white-500 text-black-900 font-semibold border-2 border-white rounded-lg hover:bg-blue-400 transition-colors text-[1.4rem] font-bold"
+            style={{ fontFamily: "'Jersey20', sans-serif" }}
+          >
             Buy Shards
           </button>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="relative z-30 flex flex-col justify-center h-[80vh] pl-24 mt-26 max-w-3xl">
+      <main className="relative z-30 flex flex-col justify-center h-[80vh] pl-24 mt-20 max-w-3xl">
         <div className="flex flex-col">
           <h1
             className="text-[14rem] font-bold text-white leading-none whitespace-nowrap"
@@ -160,7 +187,7 @@ const LandingPage = ({ onPlayClick }: LandingPageProps) => {
 
         <div className="flex gap-4 mt-[-1rem]">
           <button
-            onClick={onPlayClick}
+            onClick={handlePlayClick}
             onMouseEnter={() => setIsPlayHovering(true)}
             onMouseLeave={() => setIsPlayHovering(false)}
             className={`px-23 py-4 rounded-lg transition-all duration-300 text-2xl ${
