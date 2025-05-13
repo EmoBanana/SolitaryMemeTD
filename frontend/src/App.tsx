@@ -10,6 +10,8 @@ import {
 import LandingPage from "./components/LandingPage";
 import Home from "./components/Home";
 import Game from "./components/Game";
+import MultiplayerLobby from "./components/MultiplayerLobby";
+import MultiplayerGame from "./components/MultiplayerGame";
 import { createAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { SolanaAdapter } from "@reown/appkit-adapter-solana/react";
 import { solana, solanaTestnet, solanaDevnet } from "@reown/appkit/networks";
@@ -106,6 +108,28 @@ const GameWithNav = () => {
   return <Game onExit={handleGameExit} />;
 };
 
+// Multiplayer lobby with navigation
+const MultiplayerLobbyWithNav = () => {
+  const navigate = useNavigate();
+
+  const handleBackToHome = () => {
+    navigate("/home");
+  };
+
+  return <MultiplayerLobby onBack={handleBackToHome} />;
+};
+
+// Multiplayer game with navigation
+const MultiplayerGameWithNav = () => {
+  const navigate = useNavigate();
+
+  const handleExitToLobby = () => {
+    navigate("/multiplayer");
+  };
+
+  return <MultiplayerGame onExit={handleExitToLobby} />;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -125,6 +149,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <GameWithNav />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/multiplayer"
+            element={
+              <ProtectedRoute>
+                <MultiplayerLobbyWithNav />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/multiplayer-game/:roomId"
+            element={
+              <ProtectedRoute>
+                <MultiplayerGameWithNav />
               </ProtectedRoute>
             }
           />
