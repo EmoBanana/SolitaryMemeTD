@@ -90,6 +90,11 @@ const Home = ({ onDisconnect }: HomeProps) => {
     navigate("/game");
   };
 
+  // Handle Multiplayer button
+  const handleMultiplayer = () => {
+    navigate("/multiplayer");
+  };
+
   return (
     <div
       className="min-h-screen w-full bg-cover bg-center flex flex-col"
@@ -106,7 +111,7 @@ const Home = ({ onDisconnect }: HomeProps) => {
           className="text-3xl font-bold text-white"
           style={{ fontFamily: "'Jersey20', sans-serif" }}
         >
-          Solitary Meme TD
+          SMTD
         </div>
         {/* Center: Nav */}
         <nav className="flex gap-10 text-xl font-bold text-white">
@@ -129,16 +134,6 @@ const Home = ({ onDisconnect }: HomeProps) => {
               ) : null}
               {balance} {SMTD_TOKEN_SYMBOL}
             </div>
-            <button
-              onClick={() =>
-                alert(
-                  "Minting test tokens is not implemented yet. This would create test tokens in your wallet for development."
-                )
-              }
-              className="text-xs text-white hover:text-yellow-300 mt-1 text-center"
-            >
-              Get test tokens
-            </button>
           </div>
           <button
             onClick={handleDisconnect}
@@ -160,13 +155,26 @@ const Home = ({ onDisconnect }: HomeProps) => {
         >
           One Meme, Countless Enemies.
         </h2>
-        <button
-          onClick={handleSummon}
-          className="mt-8 px-10 py-5 bg-yellow-400 hover:bg-yellow-300 text-black text-3xl font-bold rounded-xl shadow-lg transition-all"
-          style={{ fontFamily: "'Pixellari', sans-serif" }}
-        >
-          Summon Your Tower
-        </button>
+        <div className="flex flex-col sm:flex-row gap-6">
+          <button
+            onClick={handleSummon}
+            className="px-10 py-5 bg-yellow-400 hover:bg-yellow-300 text-black text-3xl font-bold rounded-xl shadow-lg transition-all"
+            style={{ fontFamily: "'Pixellari', sans-serif" }}
+          >
+            Summon Your Tower
+          </button>
+          <button
+            onClick={handleMultiplayer}
+            className="px-10 py-5 bg-purple-600 hover:bg-purple-500 text-white text-3xl font-bold rounded-xl shadow-lg transition-all"
+            style={{ fontFamily: "'Pixellari', sans-serif" }}
+          >
+            Multiplayer Mode
+          </button>
+        </div>
+        <div className="mt-4 text-sm text-gray-300 bg-black/50 p-2 rounded">
+          Multiplayer: Create or join a room with a 6-digit code. Challenge
+          others and stake SOL to win!
+        </div>
       </main>
     </div>
   );

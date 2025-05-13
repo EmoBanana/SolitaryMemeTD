@@ -5,6 +5,17 @@ import { TextureLoader, Vector3 } from "three";
 import * as THREE from "three";
 import { create } from "zustand";
 
+// Extend Window interface to include our global variables
+declare global {
+  interface Window {
+    onWaveClearedCallback?: (wave: number) => void;
+    canAdvanceWave?: boolean;
+    gameExitCallback?: () => void;
+    showExitButton?: boolean;
+    useGameSetWave?: (waveNumber: number) => void;
+  }
+}
+
 /* ──────────────────────────────────────────────────────────────────────────────
    ↑↑  CUSTOMISE SHOP PRICES HERE  ↑↑
    Each upgrade cost = BASE × (SCALING^current level).
@@ -122,7 +133,7 @@ interface Store {
   removeEnemy(id: number, reward: number): void;
   addProjectile(p: Projectile): void;
   removeProjectile(id: number): void;
-  nextWave(): void;
+  nextWave(skipCallback?: boolean): void;
   applyRegen(): void;
   resetGame(): void;
   updateGameTime(): void;
@@ -184,7 +195,7 @@ export const useGame = create<Store>((set, get) => ({
   removeProjectile: (id) =>
     set((s) => ({ projectiles: s.projectiles.filter((p) => p.id !== id) })),
 
-  nextWave: () => {
+  nextWave: (skipCallback = false) => {
     const currentWave = get().wave;
     console.log(
       `Advancing from Wave ${currentWave} to Wave ${currentWave + 1}`
@@ -194,6 +205,11 @@ export const useGame = create<Store>((set, get) => ({
       wave: s.wave + 1,
       coins: s.coins + Math.round(s.wave * 10 * s.waveRewardMult), // Wave completion bonus
     }));
+
+    // If we're in a multiplayer game and a callback is available, notify the game component
+    if (!skipCallback && window.onWaveClearedCallback) {
+      window.onWaveClearedCallback(currentWave);
+    }
   },
 
   applyRegen: () =>
@@ -468,7 +484,7 @@ function AutoFire() {
 }
 
 /* ---------- Wave spawner ---------------------------------------------------- */
-function Spawner() {
+function Spawner({ canAdvanceWave = true }) {
   const addEnemy = useGame((s) => s.addEnemy);
   const wave = useGame((s) => s.wave);
   const enemies = useGame((s) => s.enemies);
@@ -483,6 +499,14 @@ function Spawner() {
   const timeAccRef = useRef(0);
   const waveActiveRef = useRef(true);
   const waveCompletedRef = useRef(false); // Track if wave completion was handled
+  const waitingForOpponentRef = useRef(!canAdvanceWave); // Track if we're waiting for opponent - initialize based on canAdvanceWave
+  const canAdvanceWaveRef = useRef(canAdvanceWave); // Keep track of canAdvanceWave changes
+
+  // HARDCODED PAUSE FLAG - FOR DIRECT CONTROL
+  const forcePauseRef = useRef(!canAdvanceWave);
+
+  // Global tracking state
+  const isSpawningPaused = useRef(!canAdvanceWave);
 
   // Reset when game ID changes (complete reset)
   useEffect(() => {
@@ -494,8 +518,12 @@ function Spawner() {
     timeAccRef.current = 0;
     waveActiveRef.current = true;
     waveCompletedRef.current = false;
+    waitingForOpponentRef.current = !canAdvanceWave;
+    canAdvanceWaveRef.current = canAdvanceWave;
+    isSpawningPaused.current = !canAdvanceWave;
+    forcePauseRef.current = !canAdvanceWave;
     waveRef.current = wave;
-  }, [gameId, wave]);
+  }, [gameId, wave, canAdvanceWave]);
 
   // Handle when wave changes
   useEffect(() => {
@@ -508,18 +536,70 @@ function Spawner() {
       timeAccRef.current = 0;
       waveActiveRef.current = true;
       waveCompletedRef.current = false;
+
+      // IMPORTANT: Don't reset waiting/pausing state based on wave change alone
+      // Instead respect the canAdvanceWave prop value
+      waitingForOpponentRef.current = !canAdvanceWave;
+      isSpawningPaused.current = !canAdvanceWave;
+      forcePauseRef.current = !canAdvanceWave;
+
+      console.log(
+        `Wave ${wave} spawner initialized with ${toSpawnRef.current} enemies, paused=${forcePauseRef.current}`
+      );
     }
-  }, [wave]);
+  }, [wave, canAdvanceWave]);
+
+  // Handle canAdvanceWave prop changes
+  useEffect(() => {
+    console.log(
+      `canAdvanceWave changed to: ${canAdvanceWave}, waiting: ${waitingForOpponentRef.current}`
+    );
+    canAdvanceWaveRef.current = canAdvanceWave;
+
+    // HARDCODED: Directly set force pause based on canAdvanceWave
+    forcePauseRef.current = !canAdvanceWave;
+
+    // If we can't advance wave, we should be paused
+    isSpawningPaused.current = !canAdvanceWave;
+    waitingForOpponentRef.current = !canAdvanceWave;
+
+    // If we're waiting for opponent and now we can advance
+    if (waitingForOpponentRef.current && canAdvanceWave) {
+      console.log("Opponent is ready, continuing to next wave");
+      waitingForOpponentRef.current = false;
+      isSpawningPaused.current = false;
+      forcePauseRef.current = false;
+      waveActiveRef.current = true;
+
+      // If we have completed the wave, advance to the next one
+      if (
+        waveCompletedRef.current &&
+        enemies.length === 0 &&
+        toSpawnRef.current === 0
+      ) {
+        console.log("Advancing to next wave now that opponent is ready");
+        nextWave();
+      }
+    }
+  }, [canAdvanceWave, enemies.length, nextWave]);
 
   // Handle tower destruction
   useEffect(() => {
     if (towerHp <= 0) {
       waveActiveRef.current = false;
+      waitingForOpponentRef.current = false;
+      isSpawningPaused.current = true;
+      forcePauseRef.current = true;
       console.log("Tower destroyed, stopping spawns");
     }
   }, [towerHp]);
 
   useFrame((_, dt) => {
+    // HARDCODED PAUSE: Immediately return if we're forced to pause
+    if (forcePauseRef.current) {
+      return;
+    }
+
     // Sync with current game session
     if (currentGameId.current !== gameId) {
       currentGameId.current = gameId;
@@ -527,6 +607,10 @@ function Spawner() {
       timeAccRef.current = 0;
       waveActiveRef.current = true;
       waveCompletedRef.current = false;
+      waitingForOpponentRef.current = !canAdvanceWave;
+      isSpawningPaused.current = !canAdvanceWave;
+      forcePauseRef.current = !canAdvanceWave;
+      canAdvanceWaveRef.current = canAdvanceWave;
       console.log(
         `Spawner detected game reset, syncing to gameId: ${gameId}, wave: ${wave}`
       );
@@ -535,6 +619,12 @@ function Spawner() {
 
     // Don't spawn or update if tower is destroyed
     if (towerHp <= 0) return;
+
+    // Don't spawn or process if we're waiting for the opponent
+    if (waitingForOpponentRef.current || isSpawningPaused.current) {
+      console.log("Spawning is paused - waiting for opponent");
+      return; // Exit early to completely stop all spawning logic while waiting
+    }
 
     // Don't process if wave isn't active
     if (!waveActiveRef.current) return;
@@ -615,9 +705,45 @@ function Spawner() {
       waveActiveRef.current &&
       !waveCompletedRef.current
     ) {
-      console.log(`Wave ${wave} complete, moving to next wave`);
+      console.log(`Wave ${wave} complete, preparing for next wave`);
       waveCompletedRef.current = true; // Mark as completed to prevent multiple calls
-      nextWave();
+
+      // Notify wave cleared callback (multiplayer)
+      if (window.onWaveClearedCallback) {
+        console.log(`Calling wave cleared callback for wave ${wave}`);
+        window.onWaveClearedCallback(wave);
+      }
+
+      // ALWAYS SET WAITING FLAGS FIRST to ensure spawning actually stops
+      // These must be set *before* checking canAdvanceWave to prevent race conditions
+      waitingForOpponentRef.current = true;
+      isSpawningPaused.current = true;
+      forcePauseRef.current = true; // HARDCODED: Force pause when waiting
+      waveActiveRef.current = false; // Make wave inactive while waiting
+
+      // Only check if we can advance after ensuring spawning is paused
+      if (canAdvanceWaveRef.current) {
+        // Single player or both players ready - immediately continue
+        console.log(
+          "Can advance immediately - will unpause and go to next wave"
+        );
+
+        // In single player, we can immediately unpause and advance
+        if (!window.onWaveClearedCallback) {
+          waitingForOpponentRef.current = false;
+          isSpawningPaused.current = false;
+          forcePauseRef.current = false;
+          waveActiveRef.current = true;
+          console.log("Advancing to next wave immediately");
+          nextWave();
+        }
+        // In multiplayer with both ready, server will send advance_wave event
+        // which will trigger canAdvanceWave change and unpause
+      } else {
+        console.log(
+          "Cannot advance yet - waiting for opponent to complete wave - PAUSED"
+        );
+      }
     }
   });
 
@@ -744,6 +870,9 @@ function HUD() {
     waveRewardMult,
   } = useGame();
 
+  // Get the onExit function from Game component through global variable
+  const onExit = window.gameExitCallback;
+
   // Format fire rate as shots per second
   const shotsPerSecond = (1000 / fireRate).toFixed(1);
 
@@ -765,6 +894,30 @@ function HUD() {
         maxWidth: "250px",
       }}
     >
+      {/* Back to Home button - positioned first in the column */}
+      {window.showExitButton && (
+        <button
+          onClick={onExit}
+          style={{
+            border: "none",
+            padding: "8px 16px",
+            background: "rgba(60,60,60,0.85)",
+            color: "white",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontSize: "14px",
+            fontFamily: "monospace",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            alignSelf: "flex-start",
+          }}
+        >
+          <span style={{ fontSize: "18px" }}>⬅</span> Back to Home
+        </button>
+      )}
+
       {/* Wave counter - more prominent */}
       <div
         style={{
@@ -1130,23 +1283,25 @@ function UpgradePanel() {
 }
 
 /* ---------- Game Over ------------------------------------------------------- */
-function GameOver() {
+function GameOver({
+  isMultiplayer = false,
+  winnerNickname = "Unknown",
+}: {
+  isMultiplayer?: boolean;
+  winnerNickname?: string;
+}) {
   const { resetGame, wave, gameTime } = useGame();
 
-  // Format time as MM:SS
+  // Format elapsed time as mm:ss
   const minutes = Math.floor(gameTime / 60);
-  const seconds = gameTime % 60;
+  const seconds = Math.floor(gameTime % 60);
   const formattedTime = `${minutes.toString().padStart(2, "0")}:${seconds
     .toString()
     .padStart(2, "0")}`;
 
-  // Handle Play Again button click
   const handlePlayAgain = () => {
-    console.log("Play Again clicked, fully resetting game state");
-    // Force a complete reset of game state
-    setTimeout(() => {
-      resetGame();
-    }, 50); // Small delay to ensure clean reset
+    // Reset game state when "Play Again" is clicked
+    resetGame();
   };
 
   return (
@@ -1174,7 +1329,7 @@ function GameOver() {
           marginBottom: "10px",
         }}
       >
-        GAME OVER
+        {isMultiplayer ? "YOU LOST" : "GAME OVER"}
       </div>
 
       <div
@@ -1184,7 +1339,7 @@ function GameOver() {
           margin: "10px 0 20px 0",
         }}
       >
-        Your tower was destroyed!
+        {isMultiplayer ? `${winnerNickname} WON!` : "Your tower was destroyed!"}
       </div>
 
       <div
@@ -1231,25 +1386,29 @@ function GameOver() {
           marginTop: "10px",
         }}
       >
-        <button
-          style={{
-            border: "none",
-            borderRadius: "12px",
-            padding: "12px 30px",
-            color: "white",
-            background: "#cc0000",
-            fontSize: "18px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            boxShadow: "0 0 15px rgba(204, 0, 0, 0.5)",
-            transition: "all 0.2s",
-          }}
-          onClick={handlePlayAgain}
-          onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-          onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-        >
-          Play Again
-        </button>
+        {!isMultiplayer && (
+          <button
+            style={{
+              border: "none",
+              borderRadius: "12px",
+              padding: "12px 30px",
+              color: "white",
+              background: "#cc0000",
+              fontSize: "18px",
+              cursor: "pointer",
+              fontWeight: "bold",
+              boxShadow: "0 0 15px rgba(204, 0, 0, 0.5)",
+              transition: "all 0.2s",
+            }}
+            onClick={handlePlayAgain}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.transform = "scale(1.05)")
+            }
+            onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+          >
+            Play Again
+          </button>
+        )}
         <button
           style={{
             border: "none",
@@ -1266,48 +1425,68 @@ function GameOver() {
           onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
           onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          Back to Home
+          {isMultiplayer ? "Return to Lobby" : "Back to Home"}
         </button>
       </div>
     </div>
   );
 }
 
-/* ---------- Exit Button ----------------------------------------------------- */
-function ExitButton({ onExit }: { onExit: () => void }) {
-  return (
-    <button
-      onClick={onExit}
-      style={{
-        position: "absolute",
-        top: 20,
-        left: "50%",
-        transform: "translateX(-50%)",
-        padding: "8px 16px",
-        background: "rgba(80,80,80,0.8)",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontFamily: "monospace",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      }}
-    >
-      <span style={{ fontSize: "18px" }}>⬅</span> Back to Home
-    </button>
-  );
-}
-
 /* ---------- Game root ------------------------------------------------------- */
 interface GameProps {
   onExit: () => void;
+  isMultiplayer?: boolean;
+  onGameStateUpdate?: (gameState: any) => void;
+  isSpectator?: boolean;
+  onWaveCleared?: (wave: number) => void;
+  canAdvanceWave?: boolean;
+  shouldStopGame?: boolean;
+  opponentNickname?: string;
 }
 
-export default function Game({ onExit }: GameProps) {
-  const { towerHp, resetGame } = useGame();
+export default function Game({
+  onExit,
+  isMultiplayer = false,
+  onGameStateUpdate,
+  isSpectator = false,
+  onWaveCleared,
+  canAdvanceWave = true,
+  shouldStopGame = false,
+  opponentNickname = "Opponent",
+}: GameProps) {
+  const {
+    towerHp,
+    maxTowerHp,
+    wave,
+    coins,
+    enemies,
+    damage,
+    range,
+    fireRate,
+    gameTime,
+    resetGame,
+  } = useGame();
+
+  // Set up global variables for the back to home button
+  useEffect(() => {
+    // Make exit callback available to HUD component
+    window.gameExitCallback = onExit;
+    window.showExitButton = !isMultiplayer;
+
+    // Expose the setWave function globally for multiplayer synchronization
+    if (isMultiplayer) {
+      window.useGameSetWave = (waveNumber) => {
+        console.log(`Setting wave directly to ${waveNumber} via global method`);
+        useGame.setState({ wave: waveNumber });
+      };
+    }
+
+    return () => {
+      window.gameExitCallback = undefined;
+      window.showExitButton = false;
+      window.useGameSetWave = undefined;
+    };
+  }, [onExit, isMultiplayer]);
 
   // Reset game state when mounting the component
   useEffect(() => {
@@ -1324,6 +1503,21 @@ export default function Game({ onExit }: GameProps) {
     };
   }, [resetGame]);
 
+  // Force game over when shouldStopGame is true in multiplayer
+  useEffect(() => {
+    if (isMultiplayer && shouldStopGame && towerHp > 0) {
+      console.log("Forcing game over because opponent's tower was destroyed");
+      // Set tower HP to 0 to trigger game over - use setState directly for immediate effect
+      useGame.setState({ towerHp: 0 });
+
+      // Stop all game loops and animations
+      if (window.onWaveClearedCallback) {
+        // Notify MultiplayerGame that we're stopping immediately
+        window.onWaveClearedCallback(-1); // Use -1 as a signal to indicate game over
+      }
+    }
+  }, [isMultiplayer, shouldStopGame, towerHp]);
+
   // Set up event listeners after component mount
   useEffect(() => {
     const exitButton = document.getElementById("exitButton");
@@ -1338,6 +1532,65 @@ export default function Game({ onExit }: GameProps) {
     };
   }, [towerHp, onExit]); // Re-run when towerHp changes (GameOver screen appears)
 
+  // If in multiplayer mode, send game state updates to opponent via callback
+  useEffect(() => {
+    if (isMultiplayer && onGameStateUpdate && !isSpectator) {
+      // Prepare game state data to send to opponent
+      const gameState = {
+        towerHp,
+        maxTowerHp,
+        wave,
+        coins,
+        enemyCount: enemies.length,
+        damage,
+        range,
+        fireRate,
+        gameTime,
+      };
+
+      // Send updates every 1 second (can adjust frequency)
+      const interval = setInterval(() => {
+        onGameStateUpdate(gameState);
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [
+    isMultiplayer,
+    onGameStateUpdate,
+    isSpectator,
+    towerHp,
+    maxTowerHp,
+    wave,
+    coins,
+    enemies.length,
+    damage,
+    range,
+    fireRate,
+    gameTime,
+  ]);
+
+  // Add global callback for wave cleared notifications
+  useEffect(() => {
+    if (isMultiplayer && onWaveCleared) {
+      // Use window object to share callback across components
+      window.onWaveClearedCallback = onWaveCleared;
+    }
+
+    return () => {
+      // Clean up
+      window.onWaveClearedCallback = undefined;
+    };
+  }, [isMultiplayer, onWaveCleared]);
+
+  // Add effect to monitor canAdvanceWave prop
+  useEffect(() => {
+    // For multiplayer games, update the global flag
+    if (isMultiplayer) {
+      window.canAdvanceWave = canAdvanceWave;
+    }
+  }, [isMultiplayer, canAdvanceWave]);
+
   return (
     <div
       style={{
@@ -1351,11 +1604,14 @@ export default function Game({ onExit }: GameProps) {
         <Suspense fallback={null}>
           <Tower />
           <RangeCircle />
-          <Spawner
-            key={`spawner-${gameId}-${towerHp > 0 ? "active" : "inactive"}`}
-          />
-          <AutoFire />
-          <RegenTimer />
+          {!isSpectator && (
+            <Spawner
+              key={`spawner-${gameId}-${towerHp > 0 ? "active" : "inactive"}`}
+              canAdvanceWave={canAdvanceWave}
+            />
+          )}
+          {!isSpectator && <AutoFire />}
+          {!isSpectator && <RegenTimer />}
           {useGame.getState().enemies.map((e) => (
             <EnemySprite key={e.id} enemy={e} />
           ))}
@@ -1367,10 +1623,14 @@ export default function Game({ onExit }: GameProps) {
 
       <HUD />
       <GameTimer />
-      <GameSpeedControl />
-      <UpgradePanel />
-      <ExitButton onExit={onExit} />
-      {towerHp <= 0 && <GameOver />}
+      {!isMultiplayer && <GameSpeedControl />}
+      {!isSpectator && <UpgradePanel />}
+      {towerHp <= 0 && (
+        <GameOver
+          isMultiplayer={isMultiplayer}
+          winnerNickname={opponentNickname}
+        />
+      )}
     </div>
   );
 }
