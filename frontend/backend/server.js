@@ -2,6 +2,11 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
+const web3 = require("@solana/web3.js");
+const anchor = require("@project-serum/anchor");
+const fs = require("fs");
+const path = require("path");
+const bs58 = require("bs58");
 
 const app = express();
 app.use(cors());
@@ -14,8 +19,157 @@ const io = new Server(server, {
   },
 });
 
+// Solana program constants
+const PROGRAM_ID = "EhWxGGbjAm1ir5DsoothYsHuRqQqpZ15AxZqbJ9y8exy";
+const SHARD_TOKEN_ADDRESS = "B3G9uhi7euWErYvwfTye2MpDJytkYX6mAgUhErHbnSoT";
+const TREASURY_ADDRESS = "9yqmoJ4ekXvTPQDCj7zQS36ar2fMb1fTx1FA2xovfZjR";
+const MINT_AUTHORITY_SEED = "mint-authority";
+const SHARDS_PER_SOL = 3000;
+const WINNER_PAYOUT_PERCENTAGE = 95; // Winner gets 95% of the pool
+
+// Load the IDL from file
+const idlFile = path.join(__dirname, "../../idl.json");
+const idlContent = fs.readFileSync(idlFile, "utf8");
+const idl = JSON.parse(idlContent);
+
 // Store active rooms
 const rooms = new Map();
+
+// Setup Solana connection
+const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+
+// Create treasury keypair
+let payer;
+try {
+  const treasurySecretKey =
+    "5Tk3LG8dWKL4Xpj8DaAi68muebuh5iAgC7u2puQfzcBpe1kM4xDrV8TMvji2e3qPEaV4bcyRsQWGo7JnaGZjEXD";
+  const secretKey = bs58.decode(treasurySecretKey);
+  payer = web3.Keypair.fromSecretKey(secretKey);
+
+  console.log("Treasury public key:", payer.publicKey.toString());
+  if (payer.publicKey.toString() !== TREASURY_ADDRESS) {
+    console.warn(
+      "Warning: Treasury keypair public key does not match expected address"
+    );
+    console.warn("Expected:", TREASURY_ADDRESS);
+    console.warn("Got:", payer.publicKey.toString());
+  }
+} catch (err) {
+  console.error("Failed to load treasury keypair:", err);
+  payer = web3.Keypair.generate(); // Fallback for testing
+  console.warn(
+    "Using generated keypair for testing:",
+    payer.publicKey.toString()
+  );
+}
+
+// Create an anchor provider and program
+const provider = new anchor.AnchorProvider(
+  connection,
+  {
+    publicKey: payer.publicKey,
+    signTransaction: async (tx) => {
+      tx.partialSign(payer);
+      return tx;
+    },
+    signAllTransactions: async (txs) => {
+      return txs.map((tx) => {
+        tx.partialSign(payer);
+        return tx;
+      });
+    },
+  },
+  { commitment: "processed" }
+);
+
+const program = new anchor.Program(
+  idl,
+  new web3.PublicKey(PROGRAM_ID),
+  provider
+);
+
+// Function to mint tokens to a winner
+async function mintTokensToWinner(winnerAddress, amount) {
+  try {
+    console.log(`Minting ${amount} tokens to winner ${winnerAddress}`);
+
+    const winnerPublicKey = new web3.PublicKey(winnerAddress);
+    const mintPublicKey = new web3.PublicKey(SHARD_TOKEN_ADDRESS);
+
+    // Find the PDA for mint authority
+    const [mintAuthorityPDA] = await web3.PublicKey.findProgramAddress(
+      [Buffer.from(MINT_AUTHORITY_SEED), mintPublicKey.toBuffer()],
+      new web3.PublicKey(PROGRAM_ID)
+    );
+
+    // Calculate token amount (3000 tokens per SOL)
+    const tokenAmount = Math.floor(amount * SHARDS_PER_SOL);
+
+    // Get or create the associated token account for the winner
+    const associatedTokenAddress = await anchor.utils.token.associatedAddress({
+      mint: mintPublicKey,
+      owner: winnerPublicKey,
+    });
+
+    // Check if the associated token account exists
+    let tokenAccount;
+    try {
+      tokenAccount = await connection.getAccountInfo(associatedTokenAddress);
+    } catch (error) {
+      console.error("Error checking token account:", error);
+    }
+
+    // If token account doesn't exist, create it
+    if (!tokenAccount) {
+      console.log("Creating token account for winner");
+      const createATAIx =
+        anchor.utils.token.createAssociatedTokenAccountInstruction(
+          payer.publicKey,
+          associatedTokenAddress,
+          winnerPublicKey,
+          mintPublicKey
+        );
+
+      const tx = new web3.Transaction().add(createATAIx);
+      const signature = await web3.sendAndConfirmTransaction(connection, tx, [
+        payer,
+      ]);
+      console.log("Created token account:", signature);
+    }
+
+    // Create the mint instruction with PDA as signer
+    const txn = await program.methods
+      .mintTokens(new anchor.BN(tokenAmount))
+      .accounts({
+        mintAuthority: mintAuthorityPDA,
+        recipient: winnerPublicKey,
+        tokenMint: mintPublicKey,
+        recipientTokenAccount: associatedTokenAddress,
+        systemProgram: web3.SystemProgram.programId,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        rent: web3.SYSVAR_RENT_PUBKEY,
+      })
+      .rpc();
+
+    console.log(
+      `Successfully minted ${tokenAmount} tokens to ${winnerAddress}`
+    );
+    console.log("Transaction signature:", txn);
+
+    return {
+      success: true,
+      amount: tokenAmount,
+      txId: txn,
+    };
+  } catch (error) {
+    console.error("Error minting tokens:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+}
 
 app.get("/", (req, res) => {
   res.send("SMTD Multiplayer Server is running");
@@ -34,6 +188,22 @@ app.get("/api/rooms", (req, res) => {
 
 io.on("connection", (socket) => {
   console.log(`User connected: ${socket.id}`);
+
+  // Add check_room event handler
+  socket.on("check_room", (data, callback) => {
+    const { roomCode } = data;
+
+    if (rooms.has(roomCode)) {
+      const room = rooms.get(roomCode);
+      callback({
+        exists: true,
+        stakeAmount: room.stakeAmount,
+        players: room.players.length,
+      });
+    } else {
+      callback({ exists: false });
+    }
+  });
 
   // Create a new room
   socket.on("create_room", (data) => {
@@ -436,31 +606,62 @@ io.on("connection", (socket) => {
       `Game over in room ${roomCode}. Winner: ${winner} (${winnerNickname}), Loser: ${loser}`
     );
 
-    // Notify all players in the room
-    for (const playerId of room.playerSockets.keys()) {
-      const playerSocket = io.sockets.sockets.get(playerId);
-      if (playerSocket) {
-        playerSocket.emit("game_over", {
-          winner,
-          loser,
-          winnerNickname,
-          draw: false,
-        });
-      }
-    }
+    // Calculate reward for the winner (95% of the total stake pool)
+    const totalStake = room.players.reduce(
+      (sum, player) => sum + player.stakeAmount,
+      0
+    );
+    const winnerRewardLamports = Math.floor(
+      (totalStake * WINNER_PAYOUT_PERCENTAGE) / 100
+    );
+    const winnerRewardSOL = winnerRewardLamports / web3.LAMPORTS_PER_SOL;
 
-    // Notify spectators
-    for (const spectatorId of room.spectatorSockets) {
-      const spectatorSocket = io.sockets.sockets.get(spectatorId);
-      if (spectatorSocket) {
-        spectatorSocket.emit("game_over", {
-          winner,
-          loser,
-          winnerNickname,
-          draw: false,
-        });
-      }
-    }
+    console.log(
+      `Winner will receive ${winnerRewardSOL} SOL worth of tokens (${winnerRewardLamports} lamports)`
+    );
+
+    // Mint tokens to the winner
+    mintTokensToWinner(winner, winnerRewardSOL)
+      .then((result) => {
+        if (result.success) {
+          // Notify all clients about the token reward
+          io.to(roomCode).emit("winner_rewarded", {
+            winner,
+            roomCode,
+            amount: result.amount,
+            txId: result.txId,
+          });
+
+          console.log(
+            `Successfully rewarded winner ${winner} with ${result.amount} tokens`
+          );
+
+          // Update room results with reward info
+          if (room.gameResults) {
+            room.gameResults.tokenReward = {
+              amount: result.amount,
+              txId: result.txId,
+            };
+          }
+
+          // Broadcast updated room data with reward information
+          io.to(roomCode).emit("room_updated", room);
+        } else {
+          console.error(`Failed to reward winner: ${result.error}`);
+        }
+      })
+      .catch((err) => {
+        console.error("Error in reward process:", err);
+      });
+
+    // Emit game_over event to the entire room
+    io.to(roomCode).emit("game_over", {
+      winner,
+      loser,
+      winnerNickname,
+      draw: false,
+      rewardAmount: winnerRewardSOL * SHARDS_PER_SOL,
+    });
   });
 
   // Helper function to handle leaving a room

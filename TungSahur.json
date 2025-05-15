@@ -1,0 +1,40 @@
+{
+  "name": "Tung Tung Tung Sahur",
+  "symbol": "TUNGSAHUR",
+  "description": "Tung Tung Tung Sahur",
+  "image": "https://silver-cheap-silkworm-705.mypinata.cloud/ipfs/bafybeiacrjttgczifdn6wgq6dunm5lpc3yhzfl62ry6pgn4dyzcnimr6yq",
+  "attributes": [
+    {
+      "trait_type": "HP",
+      "value": 10
+    },
+    {
+      "trait_type": "Max HP",
+      "value": 10
+    },
+    {
+      "trait_type": "HP Regen",
+      "value": 0
+    },
+    {
+      "trait_type": "Damage",
+      "value": 20
+    },
+    {
+      "trait_type": "Range",
+      "value": 3
+    },
+    {
+      "trait_type": "Fire Rate",
+      "value": 1200
+    },
+    {
+      "trait_type": "Enemy Reward Multiplier",
+      "value": 1.0
+    },
+    {
+      "trait_type": "Wave Reward Multiplier",
+      "value": 1.0
+    }
+  ]
+}

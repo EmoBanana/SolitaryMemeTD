@@ -10,7 +10,10 @@ use mpl_token_metadata::{
 };
 use switchboard_v2::{VrfAccountData, VrfRequestRandomness};
 
-declare_id!("5Abab1zx1DVmamp9Mu3EVL1YnGnycdoVmxc81mnyzphD");
+// Import specific types from mpl_token_metadata
+use mpl_token_metadata::types::{Creator, DataV2};
+
+declare_id!("CC4F6JLXNuPQfBEXbPifoMjW4FX8kJVxgZLqz8U9y5nw");
 
 pub const SHARD_TOKEN_ADDRESS: &str = "B3G9uhi7euWErYvwfTye2MpDJytkYX6mAgUhErHbnSoT";
 pub const TREASURY_ADDRESS: &str = "9yqmoJ4ekXvTPQDCj7zQS36ar2fMb1fTx1FA2xovfZjR";
@@ -270,7 +273,7 @@ pub mod breakout {
         )?;
         
         let creator = vec![
-            mpl_token_metadata::state::Creator {
+            Creator {
                 address: ctx.accounts.user.key(),
                 verified: false,
                 share: 100,
@@ -279,32 +282,32 @@ pub mod breakout {
         
         let symbol = "TOWER";
         
-        let data = mpl_token_metadata::state::DataV2 {
+        let data = DataV2 {
             name: name,
             symbol: symbol.to_string(),
             uri: uri,
-            seller_fee_basis_points: 0,
+            seller_fee_basis_points: 500, // 5% royalty fee
             creators: Some(creator),
             collection: None,
             uses: None,
         };
         
-        let accounts = CreateMetadataAccountV3 {
-            metadata: ctx.accounts.metadata.to_account_info(),
-            mint: ctx.accounts.tower_mint.to_account_info(),
-            mint_authority: ctx.accounts.user.to_account_info(),
-            payer: ctx.accounts.user.to_account_info(),
-            update_authority: ctx.accounts.user.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
-        };
-        
-        let ix = CreateMetadataAccountV3::build_instruction(
-            accounts,
-            data,
-            true,
-            true,
-            None,
+        // Fix first metadata instance
+        let ix = CreateMetadataAccountV3::instruction(
+            &CreateMetadataAccountV3 {
+                metadata: ctx.accounts.metadata.key(),
+                mint: ctx.accounts.tower_mint.key(),
+                mint_authority: ctx.accounts.user.key(),
+                payer: ctx.accounts.user.key(),
+                update_authority: (ctx.accounts.user.key(), true),
+                system_program: ctx.accounts.system_program.key(),
+                rent: Some(ctx.accounts.rent.key()),
+            },
+            mpl_token_metadata::instructions::CreateMetadataAccountV3InstructionArgs {
+                data,
+                is_mutable: true,
+                collection_details: None,
+            },
         );
         
         invoke(
@@ -331,20 +334,23 @@ pub mod breakout {
             ctx.accounts.rent.to_account_info(),
         ];
         
+        // Fix first master edition instance
         invoke(
-            &CreateMasterEditionV3::build_instruction(
-                CreateMasterEditionV3 {
-                    edition: ctx.accounts.master_edition.to_account_info(),
-                    mint: ctx.accounts.tower_mint.to_account_info(),
-                    update_authority: ctx.accounts.user.to_account_info(),
-                    mint_authority: ctx.accounts.user.to_account_info(),
-                    payer: ctx.accounts.user.to_account_info(),
-                    metadata: ctx.accounts.metadata.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    rent: ctx.accounts.rent.to_account_info(),
+            &CreateMasterEditionV3::instruction(
+                &CreateMasterEditionV3 {
+                    edition: ctx.accounts.master_edition.key(),
+                    mint: ctx.accounts.tower_mint.key(),
+                    update_authority: ctx.accounts.user.key(),
+                    mint_authority: ctx.accounts.user.key(),
+                    payer: ctx.accounts.user.key(),
+                    metadata: ctx.accounts.metadata.key(),
+                    token_program: ctx.accounts.token_program.key(),
+                    system_program: ctx.accounts.system_program.key(),
+                    rent: Some(ctx.accounts.rent.key()),
                 },
-                Some(0),
+                mpl_token_metadata::instructions::CreateMasterEditionV3InstructionArgs {
+                    max_supply: Some(0),
+                },
             ),
             &master_edition_infos,
         )?;
@@ -450,7 +456,7 @@ pub mod breakout {
         )?;
         
         let creator = vec![
-            mpl_token_metadata::state::Creator {
+            Creator {
                 address: ctx.accounts.user.key(),
                 verified: false,
                 share: 100,
@@ -459,32 +465,33 @@ pub mod breakout {
         
         let symbol = "TOWER";
         
-        let data = mpl_token_metadata::state::DataV2 {
+        let data = DataV2 {
             name: name,
             symbol: symbol.to_string(),
             uri: uri,
-            seller_fee_basis_points: 0,
+            seller_fee_basis_points: 500, // 5% royalty fee
             creators: Some(creator),
             collection: None,
             uses: None,
         };
         
         let accounts = CreateMetadataAccountV3 {
-            metadata: ctx.accounts.metadata.to_account_info(),
-            mint: ctx.accounts.new_tower_mint.to_account_info(),
-            mint_authority: ctx.accounts.user.to_account_info(),
-            payer: ctx.accounts.user.to_account_info(),
-            update_authority: ctx.accounts.user.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
+            metadata: ctx.accounts.metadata.key(),
+            mint: ctx.accounts.new_tower_mint.key(),
+            mint_authority: ctx.accounts.user.key(),
+            payer: ctx.accounts.user.key(),
+            update_authority: (ctx.accounts.user.key(), true),
+            system_program: ctx.accounts.system_program.key(),
+            rent: Some(ctx.accounts.rent.key()),
         };
         
-        let ix = CreateMetadataAccountV3::build_instruction(
-            accounts,
-            data,
-            true,
-            true,
-            None,
+        let ix = CreateMetadataAccountV3::instruction(
+            &accounts,
+            mpl_token_metadata::instructions::CreateMetadataAccountV3InstructionArgs {
+                data,
+                is_mutable: true,
+                collection_details: None,
+            },
         );
         
         invoke(
@@ -512,19 +519,21 @@ pub mod breakout {
         ];
         
         invoke(
-            &CreateMasterEditionV3::build_instruction(
-                CreateMasterEditionV3 {
-                    edition: ctx.accounts.master_edition.to_account_info(),
-                    mint: ctx.accounts.new_tower_mint.to_account_info(),
-                    update_authority: ctx.accounts.user.to_account_info(),
-                    mint_authority: ctx.accounts.user.to_account_info(),
-                    payer: ctx.accounts.user.to_account_info(),
-                    metadata: ctx.accounts.metadata.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    rent: ctx.accounts.rent.to_account_info(),
+            &CreateMasterEditionV3::instruction(
+                &CreateMasterEditionV3 {
+                    edition: ctx.accounts.master_edition.key(),
+                    mint: ctx.accounts.new_tower_mint.key(),
+                    update_authority: ctx.accounts.user.key(),
+                    mint_authority: ctx.accounts.user.key(),
+                    payer: ctx.accounts.user.key(),
+                    metadata: ctx.accounts.metadata.key(),
+                    token_program: ctx.accounts.token_program.key(),
+                    system_program: ctx.accounts.system_program.key(),
+                    rent: Some(ctx.accounts.rent.key()),
                 },
-                Some(0),
+                mpl_token_metadata::instructions::CreateMasterEditionV3InstructionArgs {
+                    max_supply: Some(0),
+                },
             ),
             &master_edition_infos,
         )?;
@@ -589,18 +598,18 @@ pub mod breakout {
         let user = ctx.accounts.user.to_account_info();
         
         let request_randomness_ix = VrfRequestRandomness {
-            authority: ctx.accounts.vrf_state.to_account_info(),
-            vrf: vrf_account.clone(),
-            oracle_queue: ctx.accounts.oracle_queue.to_account_info(),
-            queue_authority: ctx.accounts.queue_authority.to_account_info(),
-            data_buffer: ctx.accounts.data_buffer.to_account_info(),
-            permission: ctx.accounts.permission.to_account_info(),
-            escrow: ctx.accounts.escrow.clone(),
-            payer: user.clone(),
-            payer_wallet: ctx.accounts.payer_wallet.to_account_info(),
+            authority:        ctx.accounts.vrf_state.to_account_info(),
+            vrf:              vrf_account.clone(),
+            oracle_queue:     ctx.accounts.oracle_queue.to_account_info(),
+            queue_authority:  ctx.accounts.queue_authority.to_account_info(),
+            data_buffer:      ctx.accounts.data_buffer.to_account_info(),
+            permission:       ctx.accounts.permission.to_account_info(),
+            escrow:           ctx.accounts.escrow.clone(),          // TokenAccount
+            payer_wallet:     ctx.accounts.payer_wallet.clone(),    // TokenAccount
+            payer_authority:  ctx.accounts.payer_authority.to_account_info(),
             recent_blockhashes: ctx.accounts.recent_blockhashes.to_account_info(),
-            program_state: ctx.accounts.program_state.to_account_info(),
-            token_program: ctx.accounts.token_program.to_account_info(),
+            program_state:    ctx.accounts.program_state.to_account_info(),
+            token_program:    ctx.accounts.token_program.to_account_info(),
         };
         
         let vrf_state_seeds = &[
@@ -655,7 +664,7 @@ pub mod breakout {
         )?;
         
         let creator = vec![
-            mpl_token_metadata::state::Creator {
+            Creator {
                 address: ctx.accounts.user.key(),
                 verified: false,
                 share: 100,
@@ -664,28 +673,28 @@ pub mod breakout {
         
         let symbol = "TOWER";
         
-        let data = mpl_token_metadata::state::DataV2 {
+        let data = DataV2 {
             name: name,
             symbol: symbol.to_string(),
             uri: uri,
-            seller_fee_basis_points: 0,
+            seller_fee_basis_points: 500, // 5% royalty fee
             creators: Some(creator),
             collection: None,
             uses: None,
         };
         
         let accounts = CreateMetadataAccountV3 {
-            metadata: ctx.accounts.metadata.to_account_info(),
-            mint: ctx.accounts.tower_mint.to_account_info(),
-            mint_authority: ctx.accounts.user.to_account_info(),
-            payer: ctx.accounts.user.to_account_info(),
-            update_authority: ctx.accounts.user.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
+            metadata: ctx.accounts.metadata.key(),
+            mint: ctx.accounts.tower_mint.key(),
+            mint_authority: ctx.accounts.user.key(),
+            payer: ctx.accounts.user.key(),
+            update_authority: (ctx.accounts.user.key(), true),
+            system_program: ctx.accounts.system_program.key(),
+            rent: Some(ctx.accounts.rent.key()),
         };
         
-        let ix = CreateMetadataAccountV3::build_instruction(
-            accounts,
+        let ix = CreateMetadataAccountV3::instruction(
+            &accounts,
             data,
             true,
             true,
@@ -717,17 +726,17 @@ pub mod breakout {
         ];
         
         invoke(
-            &CreateMasterEditionV3::build_instruction(
+            &CreateMasterEditionV3::instruction(
                 CreateMasterEditionV3 {
-                    edition: ctx.accounts.master_edition.to_account_info(),
-                    mint: ctx.accounts.tower_mint.to_account_info(),
-                    update_authority: ctx.accounts.user.to_account_info(),
-                    mint_authority: ctx.accounts.user.to_account_info(),
-                    payer: ctx.accounts.user.to_account_info(),
-                    metadata: ctx.accounts.metadata.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    rent: ctx.accounts.rent.to_account_info(),
+                    edition: ctx.accounts.master_edition.key(),
+                    mint: ctx.accounts.tower_mint.key(),
+                    update_authority: ctx.accounts.user.key(),
+                    mint_authority: ctx.accounts.user.key(),
+                    payer: ctx.accounts.user.key(),
+                    metadata: ctx.accounts.metadata.key(),
+                    token_program: ctx.accounts.token_program.key(),
+                    system_program: ctx.accounts.system_program.key(),
+                    rent: Some(ctx.accounts.rent.key()),
                 },
                 Some(0),
             ),
@@ -1389,7 +1398,7 @@ pub mod breakout {
         )?;
         
         let creator = vec![
-            mpl_token_metadata::state::Creator {
+            Creator {
                 address: ctx.accounts.user.key(),
                 verified: false,
                 share: 100,
@@ -1398,28 +1407,28 @@ pub mod breakout {
         
         let symbol = "TOWER";
         
-        let data = mpl_token_metadata::state::DataV2 {
+        let data = DataV2 {
             name: name,
             symbol: symbol.to_string(),
             uri: uri,
-            seller_fee_basis_points: 0,
+            seller_fee_basis_points: 500, // 5% royalty fee
             creators: Some(creator),
             collection: None,
             uses: None,
         };
         
         let accounts = CreateMetadataAccountV3 {
-            metadata: ctx.accounts.metadata.to_account_info(),
-            mint: ctx.accounts.tower_mint.to_account_info(),
-            mint_authority: ctx.accounts.tower_mint_authority.to_account_info(),
-            payer: ctx.accounts.fee_payer.to_account_info(),
-            update_authority: ctx.accounts.user.to_account_info(),
-            system_program: ctx.accounts.system_program.to_account_info(),
-            rent: ctx.accounts.rent.to_account_info(),
+            metadata: ctx.accounts.metadata.key(),
+            mint: ctx.accounts.tower_mint.key(),
+            mint_authority: ctx.accounts.tower_mint_authority.key(),
+            payer: ctx.accounts.fee_payer.key(),
+            update_authority: (ctx.accounts.user.key(), true),
+            system_program: ctx.accounts.system_program.key(),
+            rent: Some(ctx.accounts.rent.key()),
         };
         
-        let ix = CreateMetadataAccountV3::build_instruction(
-            accounts,
+        let ix = CreateMetadataAccountV3::instruction(
+            &accounts,
             data,
             true,
             true,
@@ -1451,17 +1460,17 @@ pub mod breakout {
         ];
         
         invoke(
-            &CreateMasterEditionV3::build_instruction(
+            &CreateMasterEditionV3::instruction(
                 CreateMasterEditionV3 {
-                    edition: ctx.accounts.master_edition.to_account_info(),
-                    mint: ctx.accounts.tower_mint.to_account_info(),
-                    update_authority: ctx.accounts.user.to_account_info(),
-                    mint_authority: ctx.accounts.tower_mint_authority.to_account_info(),
-                    payer: ctx.accounts.fee_payer.to_account_info(),
-                    metadata: ctx.accounts.metadata.to_account_info(),
-                    token_program: ctx.accounts.token_program.to_account_info(),
-                    system_program: ctx.accounts.system_program.to_account_info(),
-                    rent: ctx.accounts.rent.to_account_info(),
+                    edition: ctx.accounts.master_edition.key(),
+                    mint: ctx.accounts.tower_mint.key(),
+                    update_authority: ctx.accounts.user.key(),
+                    mint_authority: ctx.accounts.tower_mint_authority.key(),
+                    payer: ctx.accounts.fee_payer.key(),
+                    metadata: ctx.accounts.metadata.key(),
+                    token_program: ctx.accounts.token_program.key(),
+                    system_program: ctx.accounts.system_program.key(),
+                    rent: Some(ctx.accounts.rent.key()),
                 },
                 Some(0),
             ),
@@ -1750,6 +1759,13 @@ pub struct MintTower<'info> {
     )]
     pub tower: Account<'info, Tower>,
     
+    #[account(
+        mut,
+        seeds = [USER_STATS_SEED, user.key().as_ref()],
+        bump = user_stats.bump
+    )]
+    pub user_stats: Account<'info, UserStats>,
+    
     /// CHECK: This is checked in the CPI
     #[account(mut)]
     pub metadata: UncheckedAccount<'info>,
@@ -1947,13 +1963,16 @@ pub struct RequestRandomness<'info> {
     
     /// CHECK: Escrow Account
     #[account(mut)]
-    pub escrow: AccountInfo<'info>,
-    
-    /// CHECK: Payer Wallet Account
+    pub escrow: Account<'info, TokenAccount>,      // was AccountInfo
+
+    /// The user’s wrapped‑SOL / SPL‑token wallet that pays fees.
     #[account(mut)]
-    pub payer_wallet: AccountInfo<'info>,
-    
-    /// CHECK: Recent Blockhashes Sysvar
+    pub payer_wallet: Account<'info, TokenAccount>,// was AccountInfo
+
+    /// The *authority* of `payer_wallet`. Must sign.
+    pub payer_authority: Signer<'info>,            // new
+
+    /// CHECK: Recent block‑hashes sysvar
     pub recent_blockhashes: AccountInfo<'info>,
     
     /// CHECK: Program State Account
@@ -2216,7 +2235,7 @@ pub struct EndGame<'info> {
         bump = game_pool.bump,
         constraint = game_pool.owner == user.key(),
         // Only close the account after the function completes and payout is done
-        close = user @ ErrorCode::CannotCloseGamePoolDuringPayout
+        close = user
     )]
     pub game_pool: Account<'info, GamePool>,
     
@@ -2243,7 +2262,9 @@ pub struct CloseGamePool<'info> {
         mut,
         seeds = [GAME_POOL_SEED, user.key().as_ref()],
         bump = game_pool.bump,
-        constraint = game_pool.owner == user.key(),
+        constraint = game_pool.owner == user.key() @ ErrorCode::Unauthorized,
+        // You still check `!game_pool.is_completed` in your handler,
+        // so we just leave `close = user` here.
         close = user
     )]
     pub game_pool: Account<'info, GamePool>,

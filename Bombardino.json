@@ -1,0 +1,40 @@
+{
+  "name": "Bombardino Crocodilo",
+  "symbol": "BOMBARDINO",
+  "description": "Bombardino Crocodilo",
+  "image": "https://silver-cheap-silkworm-705.mypinata.cloud/ipfs/bafybeic3c5c6xqhxiz43ogoxhoo3yglqomnmlxfwopedtdg5lkpw4cqrbi",
+  "attributes": [
+    {
+      "trait_type": "HP",
+      "value": 10
+    },
+    {
+      "trait_type": "Max HP",
+      "value": 10
+    },
+    {
+      "trait_type": "HP Regen",
+      "value": 0
+    },
+    {
+      "trait_type": "Damage",
+      "value": 20
+    },
+    {
+      "trait_type": "Range",
+      "value": 3
+    },
+    {
+      "trait_type": "Fire Rate",
+      "value": 1200
+    },
+    {
+      "trait_type": "Enemy Reward Multiplier",
+      "value": 1.0
+    },
+    {
+      "trait_type": "Wave Reward Multiplier",
+      "value": 1.0
+    }
+  ]
+}
