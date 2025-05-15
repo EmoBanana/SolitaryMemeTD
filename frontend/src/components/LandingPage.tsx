@@ -1,14 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
+import * as web3 from "@solana/web3.js";
+import * as anchor from "@project-serum/anchor";
+import idl from "../../../idl.json";
 
 interface LandingPageProps {
   onWalletConnect: () => void;
 }
 
+// Program constants
+const PROGRAM_ID = "EhWxGGbjAm1ir5DsoothYsHuRqQqpZ15AxZqbJ9y8exy";
+const SHARD_TOKEN_ADDRESS = "B3G9uhi7euWErYvwfTye2MpDJytkYX6mAgUhErHbnSoT";
+const TREASURY_ADDRESS = "9yqmoJ4ekXvTPQDCj7zQS36ar2fMb1fTx1FA2xovfZjR";
+const SHARDS_PER_SOL = 3000;
+
 const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
   const [isPlayHovering, setIsPlayHovering] = React.useState<boolean>(false);
   const [isTrailerHovering, setIsTrailerHovering] =
     React.useState<boolean>(false);
+  const [isBuyHovering, setIsBuyHovering] = React.useState<boolean>(false);
+  const [buyAmount, setBuyAmount] = useState<number>(1);
+  const [isBuying, setIsBuying] = useState<boolean>(false);
+  const [buySuccess, setBuySuccess] = useState<boolean>(false);
+  const [buyError, setBuyError] = useState<string>("");
+  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
+
   const appKit = useAppKit();
   const { isConnected } = useAppKitAccount();
 
@@ -31,6 +47,100 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
 
   const handleWatchTrailer = () => {
     window.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "_blank");
+  };
+
+  const handleBuyShardsClick = async () => {
+    try {
+      // Open the wallet dialog if not connected
+      if (!isConnected) {
+        await appKit.open();
+      }
+
+      // Show buy modal once connected
+      setShowBuyModal(true);
+    } catch (error) {
+      console.error("Wallet connection failed", error);
+    }
+  };
+
+  const handleBuyShards = async () => {
+    try {
+      setIsBuying(true);
+      setBuyError("");
+
+      if (!window.solana || !window.solana.isPhantom) {
+        setBuyError("Phantom wallet not found. Please install Phantom wallet.");
+        setIsBuying(false);
+        return;
+      }
+
+      // Request connection to the user's wallet
+      await window.solana.connect();
+      const walletPublicKey = window.solana.publicKey;
+
+      // Initialize connection to the Solana devnet
+      const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+
+      // Create a provider object
+      const provider = new anchor.AnchorProvider(connection, window.solana, {
+        commitment: "processed",
+      });
+
+      // Calculate SOL amount based on user input
+      const solAmount = buyAmount;
+      const lamportsAmount = solAmount * web3.LAMPORTS_PER_SOL;
+      const tokenAmount = buyAmount * SHARDS_PER_SOL;
+
+      // Create a program instance
+      const program = new anchor.Program(
+        JSON.parse(JSON.stringify(idl)),
+        new web3.PublicKey(PROGRAM_ID),
+        provider
+      );
+
+      const tokenMint = new web3.PublicKey(SHARD_TOKEN_ADDRESS);
+      const treasuryAddress = new web3.PublicKey(TREASURY_ADDRESS);
+
+      // Create the associated token account if it doesn't exist
+      const associatedTokenAddress = await anchor.utils.token.associatedAddress(
+        {
+          mint: tokenMint,
+          owner: walletPublicKey,
+        }
+      );
+
+      console.log(`Buying ${tokenAmount} tokens for ${solAmount} SOL`);
+
+      // Call the buyShards function from the program
+      const tx = await program.methods
+        .buyShards(new anchor.BN(solAmount * web3.LAMPORTS_PER_SOL))
+        .accounts({
+          user: provider.wallet.publicKey,
+          treasury: treasuryAddress,
+          mint: tokenMint,
+          tokenAccount: associatedTokenAddress,
+          systemProgram: web3.SystemProgram.programId,
+          tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+          associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+        })
+        .rpc();
+
+      console.log("Transaction submitted:", tx);
+      console.log(
+        `Successfully bought ${tokenAmount} tokens for ${solAmount} SOL`
+      );
+
+      setBuySuccess(true);
+      setTimeout(() => {
+        setBuySuccess(false);
+        setShowBuyModal(false);
+      }, 3000); // Close the modal after 3 seconds on success
+    } catch (error: any) {
+      console.error("Error buying tokens:", error);
+      setBuyError(`Failed to buy tokens: ${error.message}`);
+    } finally {
+      setIsBuying(false);
+    }
   };
 
   return (
@@ -130,8 +240,15 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
 
         <div className="flex space-x-4">
           <button
-            className="px-4 py-2 bg-white-500 text-black-900 font-semibold border-2 border-white rounded-lg hover:bg-blue-400 transition-colors text-[1.4rem] font-bold"
+            className={`px-4 py-2 font-semibold border-2 border-white rounded-lg transition-colors text-[1.4rem] font-bold ${
+              isBuyHovering
+                ? "bg-blue-400 text-black-900 border-blue-400"
+                : "bg-white-500 text-black-900 border-white"
+            }`}
             style={{ fontFamily: "'Jersey20', sans-serif" }}
+            onMouseEnter={() => setIsBuyHovering(true)}
+            onMouseLeave={() => setIsBuyHovering(false)}
+            onClick={handleBuyShardsClick}
           >
             Buy Shards
           </button>
@@ -198,6 +315,7 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
             style={{
               fontWeight: "bold",
               fontFamily: "'Pixellari', sans-serif",
+              cursor: "pointer",
             }}
           >
             Play now
@@ -215,6 +333,7 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
             style={{
               fontWeight: "bold",
               fontFamily: "'Pixellari', sans-serif",
+              cursor: "pointer",
             }}
           >
             Watch trailer
@@ -270,6 +389,92 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
           </div>
         </div>
       </main>
+
+      {/* Buy Shards Modal */}
+      {showBuyModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div
+            className="absolute inset-0 bg-black opacity-70"
+            onClick={() => !isBuying && setShowBuyModal(false)}
+          ></div>
+          <div className="bg-indigo-900 p-8 rounded-lg border-2 border-indigo-600 shadow-xl w-[500px] z-10 relative">
+            <h2
+              className="text-3xl mb-6 text-white text-center font-bold"
+              style={{ fontFamily: "'Jersey20', sans-serif" }}
+            >
+              Buy SMTD Shards
+            </h2>
+
+            <p className="text-gray-300 mb-4 text-center">
+              1 SOL = 3000 SMTD Shards
+              <br />
+              Min purchase: 0.1 SOL
+            </p>
+
+            {!buySuccess ? (
+              <>
+                <div className="mb-6">
+                  <label className="block text-gray-300 mb-2">
+                    Amount (SOL)
+                  </label>
+                  <div className="flex items-center">
+                    <input
+                      type="number"
+                      min="0.1"
+                      step="0.1"
+                      value={buyAmount}
+                      onChange={(e) =>
+                        setBuyAmount(parseFloat(e.target.value) || 0)
+                      }
+                      className="w-full bg-indigo-800 text-white p-3 rounded border border-indigo-600 focus:border-blue-400 focus:outline-none"
+                    />
+                    <span className="text-gray-300 ml-4">
+                      = {buyAmount * SHARDS_PER_SOL} Shards
+                    </span>
+                  </div>
+                </div>
+
+                {buyError && (
+                  <div className="text-red-400 mb-4 text-center">
+                    {buyError}
+                  </div>
+                )}
+
+                <div className="flex justify-center gap-4">
+                  <button
+                    className="px-8 py-3 bg-gray-700 text-white rounded hover:bg-gray-600 transition-colors"
+                    onClick={() => setShowBuyModal(false)}
+                    disabled={isBuying}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`px-8 py-3 rounded text-white ${
+                      isBuying
+                        ? "bg-indigo-800"
+                        : "bg-blue-600 hover:bg-blue-500"
+                    } transition-colors`}
+                    onClick={handleBuyShards}
+                    disabled={isBuying || buyAmount < 0.1}
+                  >
+                    {isBuying ? "Processing..." : "Buy Now"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-6">
+                <div className="text-5xl mb-4 text-green-400">✓</div>
+                <h3 className="text-2xl text-white mb-2">
+                  Purchase Successful!
+                </h3>
+                <p className="text-gray-300">
+                  You have purchased {buyAmount * SHARDS_PER_SOL} SMTD Shards
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,14 +1,23 @@
 [workspace]
-members = [
-    "programs/*"
-]
+members  = ["programs/breakout"]
 resolver = "2"
 
+# Anchor uses the “strip‑everything, optimise‑for‑size” profile by default.
 [profile.release]
-overflow-checks = true
-lto = "fat"
-codegen-units = 1
-[profile.release.build-override]
-opt-level = 3
-incremental = false
-codegen-units = 1
+overflow-checks = true      # keep maths panics in dev, remove in release
+lto            = "fat"
+codegen-units  = 1
+opt-level      = "s"
+debug          = 0
+panic          = "abort"
+
+# Unify every crate on the exact Solana version your tool‑chain ships (2.1.22).
+# This removes the feature‑mismatch errors you hit during `anchor build`.
+[patch.crates-io]
+solana-program      = { git = "https://github.com/anza-xyz/agave.git", tag = "v2.1.21", package = "solana-program" }
+solana-sdk          = { git = "https://github.com/anza-xyz/agave.git", tag = "v2.1.21", package = "solana-sdk" }
+solana-client       = { git = "https://github.com/anza-xyz/agave.git", tag = "v2.1.21", package = "solana-client" }
+solana-zk-token-sdk = { git = "https://github.com/anza-xyz/agave.git", tag = "v2.1.21", package = "solana-zk-token-sdk" }
+# ──────────────────────────────────────────────────────────────────────────────
+# Nothing else is needed in the workspace file; your programs bring in their
+# own dependencies.

@@ -1,27 +1,36 @@
 [package]
-name = "breakout"
-version = "0.1.0"
-description = "Created with Anchor"
-edition = "2021"
+name         = "breakout"
+version      = "0.1.0"
+description  = "SolitaryMemeTD on‑chain game logic"
+edition      = "2021"
+publish      = false            # never publish an on‑chain program to crates.io
 
 [lib]
-crate-type = ["cdylib", "lib"]
-name = "breakout"
+crate-type   = ["cdylib", "lib"] # Anchor needs both for BPF + tests
 
-[features]
-default = []
-cpi = ["no-entrypoint"]
-no-entrypoint = []
-no-idl = []
-no-log-ix-name = []
-idl-build = ["anchor-lang/idl-build"]
-
-
+###############################################################################
+# Dependencies
+###############################################################################
 [dependencies]
-anchor-lang = "0.31.1"
-anchor-spl = "0.31.1"
-mpl-token-metadata = "3.0.0"
-spl-token = { version = "4.0.0", features = ["no-entrypoint"] }
-spl-associated-token-account = { version = "2.2.0", features = ["no-entrypoint"] }
-switchboard-v2 = "0.4.0"
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl  = { version = "0.31.1", default-features = false, features = ["token", "associated_token"] }
+mpl-token-metadata = { version = "5.1.0", features = ["no-entrypoint"] }
+switchboard-v2     = "0.2"
 
+# NOTE: Do **not** add `solana-program` yourself – Anchor already re‑exports it
+# via `anchor_lang::solana_program`, and the 0.31 release notes explicitly warn
+# that a direct dependency causes version conflicts. :contentReference[oaicite:0]{index=0}
+
+###############################################################################
+# Optional features (handy when you want to “anchor test --no-idl”)
+###############################################################################
+[features]
+default       = ["no-entrypoint"]
+no-entrypoint = []    # keeps the program small; Anchor inserts the entrypoint
+
+###############################################################################
+# Dev‑dependencies (for local unit tests that run with `cargo test`)
+###############################################################################
+[dev-dependencies]
+solana-program-test = "2.1.22"
+solana-sdk          = "2.1.22"

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./index.css";
 import {
   BrowserRouter,
@@ -20,6 +20,40 @@ import {
   SolflareWalletAdapter,
 } from "@solana/wallet-adapter-wallets";
 
+// Handle Web3Modal API timeouts - add timeout wrapper to fetch API
+if (window.fetch && !window.fetchWrapped) {
+  window.fetchWrapped = true; // Mark as wrapped to avoid double-wrapping
+  const originalFetch = window.fetch;
+  window.fetch = function (input, init) {
+    // Only add timeout for Web3Modal requests
+    if (typeof input === "string" && input.includes("web3modal.org")) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      const newInit = init
+        ? { ...init, signal: controller.signal }
+        : { signal: controller.signal };
+
+      return originalFetch
+        .call(this, input, newInit)
+        .catch((err) => {
+          if (err.name === "AbortError") {
+            console.warn("Web3Modal API request timed out:", input);
+            // Return an empty JSON response instead of failing
+            return new Response(JSON.stringify({}), {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            });
+          }
+          throw err;
+        })
+        .finally(() => clearTimeout(timeoutId));
+    }
+
+    return originalFetch.apply(this, arguments);
+  };
+}
+
 // 0. Set up Solana Adapter
 const solanaWeb3JsAdapter = new SolanaAdapter({
   wallets: [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
@@ -37,15 +71,20 @@ const metadata = {
 };
 
 // 3. Create modal
-createAppKit({
-  adapters: [solanaWeb3JsAdapter],
-  networks: [solana, solanaTestnet, solanaDevnet],
-  metadata: metadata,
-  projectId,
-  features: {
-    analytics: true,
-  },
-});
+try {
+  createAppKit({
+    adapters: [solanaWeb3JsAdapter],
+    networks: [solana, solanaTestnet, solanaDevnet],
+    metadata: metadata,
+    projectId,
+    features: {
+      analytics: false, // Disable analytics to avoid timeouts
+    },
+  });
+  console.log("AppKit initialized successfully");
+} catch (error) {
+  console.error("Failed to initialize AppKit:", error);
+}
 
 // TypeScript JSX configuration
 declare global {
@@ -53,6 +92,9 @@ declare global {
     interface IntrinsicElements {
       [elementName: string]: any;
     }
+  }
+  interface Window {
+    fetchWrapped?: boolean;
   }
 }
 
