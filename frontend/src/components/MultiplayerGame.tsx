@@ -89,6 +89,12 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onExit }) => {
     isDraw: boolean;
   } | null>(null);
 
+  // Add reward state
+  const [rewardInfo, setRewardInfo] = useState<{
+    amount: number;
+    txId: string;
+  } | null>(null);
+
   // Wave synchronization
   useEffect(() => {
     if (!opponentState || !roomId || isSpectator) return;
@@ -369,6 +375,16 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onExit }) => {
       }
     });
 
+    socketService.on("winner_rewarded", (data) => {
+      console.log("Winner reward information received:", data);
+      if (isMounted.current) {
+        setRewardInfo({
+          amount: data.amount,
+          txId: data.txId,
+        });
+      }
+    });
+
     // Delay joining the room slightly to ensure socket connection is established
     setTimeout(() => {
       // Join the room
@@ -398,6 +414,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onExit }) => {
       socketService.off("joined_as_spectator");
       socketService.off("wave_sync");
       socketService.off("advance_wave");
+      socketService.off("winner_rewarded");
 
       // Only leave the room if it's an intentional navigation action
       // This prevents accidental room leaving during component unmounting
@@ -1249,6 +1266,63 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onExit }) => {
             : "Your tower was destroyed!"}
         </div>
 
+        {/* Show reward information for winner */}
+        {isWinner && (
+          <div
+            style={{
+              backgroundColor: "rgba(255, 215, 0, 0.2)",
+              padding: "15px",
+              borderRadius: "10px",
+              marginBottom: "20px",
+              border: "2px solid #FFD700",
+              maxWidth: "400px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "24px",
+                fontWeight: "bold",
+                color: "#FFD700",
+                marginBottom: "10px",
+              }}
+            >
+              REWARD
+            </div>
+
+            {rewardInfo ? (
+              <div>
+                <div
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: "bold",
+                    color: "#FFD700",
+                    marginBottom: "5px",
+                  }}
+                >
+                  {rewardInfo.amount.toLocaleString()} TOKENS
+                </div>
+                <div style={{ fontSize: "14px", marginTop: "10px" }}>
+                  Transaction ID:
+                  <a
+                    href={`https://explorer.solana.com/tx/${rewardInfo.txId}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "#4da6ff", marginLeft: "5px" }}
+                  >
+                    {rewardInfo.txId.slice(0, 8) +
+                      "..." +
+                      rewardInfo.txId.slice(-8)}
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: "18px", color: "#FFD700" }}>
+                Processing your reward...
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
           <button
             onClick={handleReturnToRoom}
@@ -1392,7 +1466,7 @@ const MultiplayerGame: React.FC<MultiplayerGameProps> = ({ onExit }) => {
           <div
             style={{
               position: "absolute",
-              top: 20,
+              bottom: 20,
               left: "50%",
               transform: "translateX(-50%)",
               zIndex: 100,

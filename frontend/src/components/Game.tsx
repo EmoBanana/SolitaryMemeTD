@@ -1,9 +1,13 @@
-import React, { Suspense, useMemo, useRef, useEffect } from "react";
+import React, { Suspense, useMemo, useRef, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { TextureLoader, Vector3 } from "three";
 import * as THREE from "three";
 import { create } from "zustand";
+// Import Solana web3 modules
+import * as web3 from "@solana/web3.js";
+import * as anchor from "@project-serum/anchor";
+import idl from "../../../idl.json";
 
 // Extend Window interface to include our global variables
 declare global {
@@ -13,8 +17,14 @@ declare global {
     gameExitCallback?: () => void;
     showExitButton?: boolean;
     useGameSetWave?: (waveNumber: number) => void;
+    solana?: any; // For Phantom wallet
   }
 }
+
+// Program constants
+const PROGRAM_ID = "EhWxGGbjAm1ir5DsoothYsHuRqQqpZ15AxZqbJ9y8exy";
+const SHARD_TOKEN_ADDRESS = "B3G9uhi7euWErYvwfTye2MpDJytkYX6mAgUhErHbnSoT";
+const TREASURY_ADDRESS = "9yqmoJ4ekXvTPQDCj7zQS36ar2fMb1fTx1FA2xovfZjR";
 
 /* ──────────────────────────────────────────────────────────────────────────────
    ↑↑  CUSTOMISE SHOP PRICES HERE  ↑↑
@@ -1291,6 +1301,15 @@ function GameOver({
   winnerNickname?: string;
 }) {
   const { resetGame, wave, gameTime } = useGame();
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintSuccess, setMintSuccess] = useState(false);
+  const [mintError, setMintError] = useState("");
+
+  // Calculate tokens earned - 1 token per 30 seconds
+  const tokensEarned = Math.floor(gameTime / 30);
+  // Token has 9 decimal places, so multiply by 10^9 to get the right amount
+  const TOKEN_DECIMALS = 9;
+  const tokenAmount = tokensEarned * Math.pow(10, TOKEN_DECIMALS);
 
   // Format elapsed time as mm:ss
   const minutes = Math.floor(gameTime / 60);
@@ -1298,6 +1317,79 @@ function GameOver({
   const formattedTime = `${minutes.toString().padStart(2, "0")}:${seconds
     .toString()
     .padStart(2, "0")}`;
+
+  // Function to mint tokens through our Solana program
+  const mintTokens = async () => {
+    try {
+      setIsMinting(true);
+      setMintError("");
+
+      if (!window.solana || !window.solana.isPhantom) {
+        setMintError(
+          "Phantom wallet not found. Please install Phantom and try again."
+        );
+        setIsMinting(false);
+        return;
+      }
+
+      // Request connection to the user's wallet
+      await window.solana.connect();
+      const walletPublicKey = window.solana.publicKey;
+
+      // Initialize connection to the Solana devnet
+      const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+
+      // Create a provider object
+      const provider = new anchor.AnchorProvider(connection, window.solana, {
+        commitment: "processed",
+      });
+
+      // Create a program instance
+      const program = new anchor.Program(
+        JSON.parse(JSON.stringify(idl)),
+        new web3.PublicKey(PROGRAM_ID),
+        provider
+      );
+
+      const tokenMint = new web3.PublicKey(SHARD_TOKEN_ADDRESS);
+      const treasuryAddress = new web3.PublicKey(TREASURY_ADDRESS);
+
+      // Check if recipient has an associated token account, create if not
+      const associatedTokenAddress = await anchor.utils.token.associatedAddress(
+        {
+          mint: tokenMint,
+          owner: walletPublicKey,
+        }
+      );
+
+      console.log(
+        `Minting ${tokensEarned} tokens (${tokenAmount} base units) as reward...`
+      );
+
+      // Use mintTokens instead of mintRewardTokens (the correct method name from idl.json)
+      const tx = await program.methods
+        .mintTokens(new anchor.BN(tokenAmount))
+        .accounts({
+          mintAuthority: provider.wallet.publicKey, // The correct account name from idl.json
+          recipient: walletPublicKey,
+          tokenMint: tokenMint,
+          recipientTokenAccount: associatedTokenAddress,
+          systemProgram: web3.SystemProgram.programId,
+          tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+          associatedTokenProgram: anchor.utils.token.ASSOCIATED_PROGRAM_ID,
+          rent: web3.SYSVAR_RENT_PUBKEY,
+        })
+        .rpc();
+
+      console.log("Transaction submitted:", tx);
+      setMintSuccess(true);
+    } catch (error) {
+      console.error("Error minting tokens:", error);
+      setMintError(`Failed to mint tokens: ${error.message}`);
+    } finally {
+      setIsMinting(false);
+    }
+  };
 
   const handlePlayAgain = () => {
     // Reset game state when "Play Again" is clicked
@@ -1376,7 +1468,70 @@ function GameOver({
           </div>
           {formattedTime}
         </div>
+        <div
+          style={{
+            textAlign: "center",
+            fontSize: "18px",
+            color: "#00cc00",
+          }}
+        >
+          <div style={{ color: "#aaa", fontSize: "14px", marginBottom: "5px" }}>
+            REWARDS
+          </div>
+          {tokensEarned} tokens
+        </div>
       </div>
+
+      {/* Token reward section */}
+      {!isMultiplayer && (
+        <div
+          style={{
+            textAlign: "center",
+            background: "rgba(0,40,0,0.5)",
+            padding: "15px",
+            borderRadius: "8px",
+            marginBottom: "20px",
+            border: "1px solid #00cc00",
+          }}
+        >
+          <button
+            style={{
+              border: "none",
+              borderRadius: "12px",
+              padding: "12px 30px",
+              color: "white",
+              background: mintSuccess ? "#006600" : "#00cc00",
+              fontSize: "16px",
+              cursor: isMinting || mintSuccess ? "default" : "pointer",
+              fontWeight: "bold",
+              transition: "all 0.2s",
+              opacity: isMinting || mintSuccess ? 0.7 : 1,
+            }}
+            onClick={mintTokens}
+            disabled={isMinting || mintSuccess}
+          >
+            {isMinting
+              ? "Minting..."
+              : mintSuccess
+              ? "Tokens Claimed!"
+              : `Claim ${tokensEarned} Tokens`}
+          </button>
+          {mintError && (
+            <div
+              style={{ color: "#ff5555", fontSize: "14px", marginTop: "10px" }}
+            >
+              {mintError}
+            </div>
+          )}
+          {mintSuccess && (
+            <div
+              style={{ color: "#55ff55", fontSize: "14px", marginTop: "10px" }}
+            >
+              Successfully minted {tokensEarned} tokens to your wallet!
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         style={{

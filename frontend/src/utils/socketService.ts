@@ -87,6 +87,21 @@ class SocketService {
     }
   }
 
+  // Check if a room exists and get stake amount
+  checkRoom(
+    roomCode: string
+  ): Promise<{ exists: boolean; stakeAmount?: number; players?: number }> {
+    return new Promise((resolve) => {
+      if (!this.socket) {
+        this.connect();
+      }
+
+      this.socket?.emit("check_room", { roomCode }, (response: any) => {
+        resolve(response);
+      });
+    });
+  }
+
   // Create a room
   createRoom(data: {
     roomCode: string;
