@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import * as web3 from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
+import * as anchor from "../anchor-browser";
 import idl from "../../../idl.json";
 
 interface LandingPageProps {
@@ -19,11 +19,11 @@ const LandingPage = ({ onWalletConnect }: LandingPageProps) => {
   const [isTrailerHovering, setIsTrailerHovering] =
     React.useState<boolean>(false);
   const [isBuyHovering, setIsBuyHovering] = React.useState<boolean>(false);
-  const [buyAmount, setBuyAmount] = useState<number>(1);
-  const [isBuying, setIsBuying] = useState<boolean>(false);
-  const [buySuccess, setBuySuccess] = useState<boolean>(false);
-  const [buyError, setBuyError] = useState<string>("");
-  const [showBuyModal, setShowBuyModal] = useState<boolean>(false);
+  const [buyAmount, setBuyAmount] = React.useState<number>(1);
+  const [isBuying, setIsBuying] = React.useState<boolean>(false);
+  const [buySuccess, setBuySuccess] = React.useState<boolean>(false);
+  const [buyError, setBuyError] = React.useState<string>("");
+  const [showBuyModal, setShowBuyModal] = React.useState<boolean>(false);
 
   const appKit = useAppKit();
   const { isConnected } = useAppKitAccount();
