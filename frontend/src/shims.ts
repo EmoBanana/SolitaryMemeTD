@@ -47,4 +47,60 @@ if ((window as any).crypto && !(window as any).crypto.createHash) {
   };
 }
 
+// This file provides browser compatibility shims for Node.js built-in modules
+// Import this file early in your application to ensure all required polyfills are loaded
+
+// Type declarations for window
+declare global {
+  interface Window {
+    Buffer: typeof Buffer;
+    process: typeof process;
+    global: typeof window;
+    assert: (condition: any, message?: string) => void;
+    util: {
+      deprecate: (fn: Function, msg: string) => Function;
+    };
+  }
+}
+
+// Assert shim
+if (typeof window !== "undefined") {
+  window.assert = function (condition, message) {
+    if (!condition) {
+      throw new Error(message || "Assertion failed");
+    }
+  };
+}
+
+// Import buffer polyfill
+import { Buffer } from "buffer";
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
+
+// Set up process
+import process from "process";
+if (typeof window !== "undefined") {
+  window.process = process;
+}
+
+// Ensure global is defined
+if (typeof window !== "undefined") {
+  window.global = window;
+}
+
+// Node.js util polyfill if needed
+const util = {
+  deprecate: (fn: Function, msg: string) => {
+    return function () {
+      console.warn(msg);
+      return fn.apply(this, arguments);
+    };
+  },
+};
+
+if (typeof window !== "undefined") {
+  window.util = util;
+}
+
 export default {};

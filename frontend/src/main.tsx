@@ -1,15 +1,21 @@
-// Import initialization first
+// Import polyfills and initializations first
 import "./libs/init";
-
-// Then polyfills and shims
 import "./shims";
+import "./polyfills/assert"; // Import the assert polyfill directly
 
-// Import other modules
+// Then other modules
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Buffer is now handled by the polyfills file
+// Create a global assert if not already available
+if (typeof window !== "undefined" && typeof window.assert === "undefined") {
+  window.assert = function (condition, message) {
+    if (!condition) {
+      throw new Error(message || "Assertion failed");
+    }
+  };
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<App />);

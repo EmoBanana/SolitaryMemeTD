@@ -30,6 +30,10 @@ export default defineConfig({
     extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
       "@": resolve(__dirname, "src"),
+      assert: resolve(__dirname, "src/assert.ts"),
+      crypto: resolve(__dirname, "node_modules/crypto-browserify"),
+      stream: resolve(__dirname, "node_modules/stream-browserify"),
+      util: resolve(__dirname, "node_modules/util"),
     },
     dedupe: [
       "react",
@@ -41,12 +45,14 @@ export default defineConfig({
   define: {
     "process.env": {},
     global: "window",
+    assert: "window.assert",
   },
   optimizeDeps: {
     esbuildOptions: {
       target: "esnext",
       define: {
         global: "globalThis",
+        assert: "window.assert",
       },
     },
     include: [
@@ -63,7 +69,6 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     rollupOptions: {
-      external: ["crypto", "stream", "assert", "util"],
       output: {
         manualChunks: {
           react: ["react", "react-dom"],
