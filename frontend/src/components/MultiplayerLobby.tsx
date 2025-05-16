@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type FC } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppKitAccount } from "@reown/appkit/react";
 import socketService from "../utils/socketService";
@@ -14,7 +14,7 @@ import {
 } from "../constants";
 import { SocketService } from "../services/SocketService";
 
-// Add JSX namespace to fix TypeScript errors
+// Add JSX namespace declaration to fix TypeScript errors
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -54,18 +54,21 @@ declare global {
         React.HTMLAttributes<HTMLParagraphElement>,
         HTMLParagraphElement
       >;
+      header: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+      nav: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+      a: React.DetailedHTMLProps<
+        React.AnchorHTMLAttributes<HTMLAnchorElement>,
+        HTMLAnchorElement
+      >;
     }
   }
 }
-
-interface MultiplayerLobbyProps {
-  onBack: () => void;
-}
-
-// Generate a random 6-digit room code
-const generateRoomCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-};
 
 // Multiplayer room types
 interface Player {
@@ -100,6 +103,15 @@ interface Room {
     playerTimes: Record<string, number>;
   };
 }
+
+interface MultiplayerLobbyProps {
+  onBack: () => void;
+}
+
+// Generate a random 6-digit room code
+const generateRoomCode = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
   const { address } = useAppKitAccount();
@@ -432,7 +444,7 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
 
     // Check if there are at least 2 players and the owner is one of them
     const ownerIsPlaying = activeRoom.players.some(
-      (p) => p.address === address
+      (p: Player) => p.address === address
     );
     if (activeRoom.players.length < 2 || !ownerIsPlaying) {
       setError("Need at least 2 players to start a match");
@@ -471,7 +483,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
     if (!activeRoom || !address) return;
 
     // Check if user is already a player
-    const isPlayer = activeRoom.players.some((p) => p.address === address);
+    const isPlayer = activeRoom.players.some(
+      (p: Player) => p.address === address
+    );
     if (isPlayer) {
       setError("Players cannot place bets");
       return;
@@ -603,11 +617,11 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   fontFamily: "'Pixellari', sans-serif",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.backgroundColor = "#6B7280";
                   e.currentTarget.style.transform = "translateY(-2px)";
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.backgroundColor = "#4B5563";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
@@ -630,13 +644,13 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                     transition: "all 0.2s ease",
                   }}
                   disabled={loading}
-                  onMouseEnter={(e) => {
+                  onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                     if (!loading) {
                       e.currentTarget.style.backgroundColor = "#34D399";
                       e.currentTarget.style.transform = "translateY(-2px)";
                     }
                   }}
-                  onMouseLeave={(e) => {
+                  onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                     if (!loading) {
                       e.currentTarget.style.backgroundColor = "#10B981";
                       e.currentTarget.style.transform = "translateY(0)";
@@ -746,7 +760,8 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                 }}
               >
                 {activeRoom.players.find(
-                  (p) => p.address === activeRoom.challengeStatus?.challenger
+                  (p: Player) =>
+                    p.address === activeRoom.challengeStatus?.challenger
                 )?.nickname || "A player"}{" "}
                 has challenged you!
               </span>
@@ -764,13 +779,13 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   transition: "all 0.2s ease",
                 }}
                 disabled={loading}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                   if (!loading) {
                     e.currentTarget.style.backgroundColor = "#34D399";
                     e.currentTarget.style.transform = "translateY(-2px)";
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                   if (!loading) {
                     e.currentTarget.style.backgroundColor = "#10B981";
                     e.currentTarget.style.transform = "translateY(0)";
@@ -828,7 +843,7 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   gap: "0.5rem",
                 }}
               >
-                {activeRoom.players.map((player) => (
+                {activeRoom.players.map((player: Player) => (
                   <div
                     key={player.address}
                     style={{
@@ -847,10 +862,10 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                           : "1px solid #374151",
                       transition: "transform 0.2s ease",
                     }}
-                    onMouseEnter={(e) => {
+                    onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                       e.currentTarget.style.transform = "translateY(-2px)";
                     }}
-                    onMouseLeave={(e) => {
+                    onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
                       e.currentTarget.style.transform = "translateY(0)";
                     }}
                   >
@@ -913,7 +928,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                           activeRoom.status === "playing" ||
                           !!activeRoom.challengeStatus
                         }
-                        onMouseEnter={(e) => {
+                        onMouseEnter={(
+                          e: React.MouseEvent<HTMLButtonElement>
+                        ) => {
                           if (
                             !(
                               loading ||
@@ -924,7 +941,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                             e.currentTarget.style.backgroundColor = "#6366F1";
                           }
                         }}
-                        onMouseLeave={(e) => {
+                        onMouseLeave={(
+                          e: React.MouseEvent<HTMLButtonElement>
+                        ) => {
                           if (
                             !(
                               loading ||
@@ -1012,10 +1031,10 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                         border: "1px solid #374151",
                         transition: "transform 0.2s ease",
                       }}
-                      onMouseEnter={(e) => {
+                      onMouseEnter={(e: React.MouseEvent<HTMLDivElement>) => {
                         e.currentTarget.style.transform = "translateY(-2px)";
                       }}
-                      onMouseLeave={(e) => {
+                      onMouseLeave={(e: React.MouseEvent<HTMLDivElement>) => {
                         e.currentTarget.style.transform = "translateY(0)";
                       }}
                     >
@@ -1060,7 +1079,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                             activeRoom.status === "playing" ||
                             !!activeRoom.challengeStatus
                           }
-                          onMouseEnter={(e) => {
+                          onMouseEnter={(
+                            e: React.MouseEvent<HTMLButtonElement>
+                          ) => {
                             if (
                               !(
                                 loading ||
@@ -1071,7 +1092,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                               e.currentTarget.style.backgroundColor = "#6366F1";
                             }
                           }}
-                          onMouseLeave={(e) => {
+                          onMouseLeave={(
+                            e: React.MouseEvent<HTMLButtonElement>
+                          ) => {
                             if (
                               !(
                                 loading ||
@@ -1128,11 +1151,11 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   fontFamily: "'Pixellari', sans-serif",
                   transition: "all 0.2s ease",
                 }}
-                onMouseEnter={(e) => {
+                onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.backgroundColor = "#6366F1";
                   e.currentTarget.style.transform = "translateY(-2px)";
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.currentTarget.style.backgroundColor = "#4338CA";
                   e.currentTarget.style.transform = "translateY(0)";
                 }}
@@ -1185,7 +1208,7 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                 >
                   Winner:{" "}
                   {activeRoom.players.find(
-                    (p) => p.address === activeRoom.gameResults?.winner
+                    (p: Player) => p.address === activeRoom.gameResults?.winner
                   )?.nickname || "Unknown"}
                 </div>
                 <div
@@ -1198,7 +1221,7 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   {Object.entries(activeRoom.gameResults.playerWaves).map(
                     ([playerAddress, wave]) => {
                       const player = activeRoom.players.find(
-                        (p) => p.address === playerAddress
+                        (p: Player) => p.address === playerAddress
                       );
                       return (
                         <div
@@ -1380,7 +1403,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
             }}
             placeholder="Enter nickname"
             value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setNickname(e.target.value)
+            }
             maxLength={20}
           />
         </div>
@@ -1414,7 +1439,7 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                 }}
                 placeholder="Enter 6-digit code"
                 value={roomCode}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setRoomCode(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
                 maxLength={6}
@@ -1439,11 +1464,11 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
               }}
               onClick={handleJoinRoom}
               disabled={loading}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                 if (!loading) e.currentTarget.style.backgroundColor = "#3B82F6";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                 if (!loading) e.currentTarget.style.backgroundColor = "#2563EB";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
@@ -1480,7 +1505,9 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
                   fontFamily: "'Jersey20', sans-serif",
                 }}
                 value={stakeAmount}
-                onChange={(e) => setStakeAmount(parseFloat(e.target.value))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStakeAmount(parseFloat(e.target.value))
+                }
               />
               <p
                 style={{
@@ -1513,11 +1540,11 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
               }}
               onClick={handleCreateRoom}
               disabled={loading}
-              onMouseEnter={(e) => {
+              onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
                 if (!loading) e.currentTarget.style.backgroundColor = "#34D399";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
-              onMouseLeave={(e) => {
+              onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
                 if (!loading) e.currentTarget.style.backgroundColor = "#10B981";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
@@ -1562,10 +1589,10 @@ const MultiplayerLobby = ({ onBack }: MultiplayerLobbyProps) => {
               fontFamily: "'Pixellari', sans-serif",
               transition: "color 0.2s ease",
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.currentTarget.style.color = "#F9FAFB";
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={(e: React.MouseEvent<HTMLButtonElement>) => {
               e.currentTarget.style.color = "#9CA3AF";
             }}
           >
