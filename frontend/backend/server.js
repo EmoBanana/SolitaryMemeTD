@@ -41,9 +41,9 @@ const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
 // Create treasury keypair
 let payer;
 try {
-  const treasurySecretKey =
-    "***REMOVED***";
-  const secretKey = bs58.decode(treasurySecretKey);
+  // Import the treasury secret key from separate file that's in .gitignore
+  const { TREASURY_SECRET_KEY } = require("./phantom_keypair.js");
+  const secretKey = bs58.decode(TREASURY_SECRET_KEY);
   payer = web3.Keypair.fromSecretKey(secretKey);
 
   console.log("Treasury public key:", payer.publicKey.toString());

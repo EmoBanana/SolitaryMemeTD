@@ -6,4 +6,7 @@ node_modules
 test-ledger
 .yarn
 phantom-keypair.json
-/frontend/backend/phantom-keypair.js
+/frontend/backend/phantom_keypair.js
+/frontend/backend/server.js
+/convert.js
+*.env

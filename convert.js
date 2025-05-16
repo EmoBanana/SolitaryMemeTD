@@ -2,11 +2,12 @@
 const bs58 = require("bs58");
 const fs = require("fs");
 
-// *** REPLACE with your own string, keep it offline ***
-const secret58 =
-  "***REMOVED***";
+// Import private key from the separate file
+const {
+  TREASURY_SECRET_KEY,
+} = require("./frontend/backend/phantom_keypair.js");
 
-const bytes = bs58.decode(secret58); // <Buffer … 64 bytes>
+const bytes = bs58.decode(TREASURY_SECRET_KEY); // <Buffer … 64 bytes>
 fs.writeFileSync("phantom-keypair.json", JSON.stringify(Array.from(bytes)));
 
 // Prints first few numbers just to sanity‑check length, then exits.
