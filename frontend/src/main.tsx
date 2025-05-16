@@ -1,10 +1,14 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import "./index.css";
-import App from "./App.tsx";
+// Import shims and polyfills first
+import "./shims";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
-);
+// Import other modules
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./index.css";
+
+// Required for Solana
+import { Buffer } from "buffer";
+window.Buffer = Buffer;
+
+ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
