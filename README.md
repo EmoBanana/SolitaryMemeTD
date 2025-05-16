@@ -81,7 +81,7 @@ npm run dev
 
 ## Contributing
 
-We welcome contributions! Feel free to submit issues or pull requests to improve Adsolute.
+We welcome contributions! Feel free to submit issues or pull requests to improve SMTD.
 
 1. Fork the project
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
