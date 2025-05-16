@@ -50,14 +50,7 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     rollupOptions: {
-      external: [
-        "@project-serum/anchor",
-        "@coral-xyz/anchor",
-        "crypto",
-        "stream",
-        "assert",
-        "util",
-      ],
+      external: ["crypto", "stream", "assert", "util"],
     },
   },
 });
