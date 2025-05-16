@@ -1,125 +1,98 @@
-# Solitary Meme Tower Defense (SMTD)
+# Solitary Meme TD (SMTD)
 
-A tower defense game built on Solana where players can compete in 1v1 matches and stake SOL for rewards.
+> "When you have SMTD (So Much To Do), play SMTD (Solitary Meme TD)."
 
-## Multiplayer Testing Instructions
+Solitary Meme TD (SMTD) is a semi-idle, meme-fueled tower defense game built for degen gamers and busy professionals alike. It fits into your life, not takes it over — letting you strategically upgrade, earn, and compete at your own pace.
 
-To test the multiplayer feature with different wallets on one laptop:
+## Concept
 
-### Quick Start (Windows)
+If you love gaming — but life gets in the way. That's where SMTD comes in.
 
-1. Run the `start-multiplayer.bat` file to automatically install dependencies and start both servers.
-2. Open the frontend URL (typically http://localhost:5173) in two different browser windows. You can use:
-   - Regular browser window and incognito/private window
-   - Two different browsers (e.g., Chrome and Firefox)
-   - Different browser profiles if supported
+SMTD blends:
 
-### Manual Setup
+- Pixelated, minimalist fantasy art
+- Effortless progression with idle gameplay
+- Competitive depth via multiplayer staking rounds
+- Ownership through tradable NFTs and token-based upgrades
 
-If you're not on Windows or prefer to start servers manually:
+## Problem Statement
 
-1. Install backend dependencies:
+- Busy users lack time for traditional games.
 
-   ```
-   cd frontend/backend
-   npm install
-   ```
+  - SMTD lets players progress with minimal attention.
 
-2. Start the backend server:
-
-   ```
-   npm start
-   ```
-
-3. In a new terminal, install frontend dependencies:
-
-   ```
-   cd frontend
-   npm install
-   npm install socket.io-client
-   ```
-
-4. Start the frontend server:
-   ```
-   npm run dev
-   ```
-
-### Testing Steps
-
-1. Connect Different Wallets:
-
-   - In each browser window, connect a different wallet (e.g., Phantom in one, Solflare in another)
-   - You can use the same wallet provider but different accounts
-
-2. Create a Room:
-
-   - In the first window, click "Multiplayer Mode"
-   - Select "Create Room"
-   - Enter a nickname and stake amount
-   - Click "Create Room"
-   - Note the 6-digit room code displayed
-
-3. Join the Room:
-
-   - In the second window, click "Multiplayer Mode"
-   - Select "Join Room"
-   - Enter the same 6-digit room code from the first window
-   - Enter a nickname
-   - Click "Join Room"
-
-4. Start a Match:
-
-   - In either window, one player can challenge the other
-   - The challenged player must accept the challenge
-   - A countdown will begin, and the game will start automatically
-
-5. Spectator Testing:
-   - Open a third browser window and connect with a third wallet
-   - Join the same room code
-   - You'll automatically be placed as a spectator
-   - You can place bets on players
+- Lack of progression and ownership in web3 games.
+  - SMTD offers token-based infinite upgrades and NFTs that evolve with you.
 
 ## Features
 
-- Real-time 1v1 multiplayer with Socket.io
-- Room creation and joining with 6-digit codes
-- Spectator mode with betting
-- Challenge system
-- Live opponent status display
-- Support for multiple wallets testing on one machine
+- 🧱 Real-time browser gameplay (Three.js + React)
+- 🪙 Dual-currency economy:
+  - Coins – Earned in-game for temporary upgrades
+  - Shards (SMTD) – Purchased/staked for permanent upgrades, tower evolution, loot boxes
+- 🧩 Towers as NFTs – Tradable, upgradeable, ownable
+- 🥇 Multiplayer staking – Challenge others, win real rewards
+- 🌐 On-chain logic powered by Solana – Efficient and scalable for smooth Web3 gaming
+- 🎨 Meme IP x Pixel art – Built for virality and vibe
 
-## Project Structure
+## 💸 Business Model
 
-The project is organized as follows:
+- Token Sales – Players fast-forward with Shards
+- NFT Royalties – 5% fee on tower trades
+- Multiplayer Staking Fee – Platform takes a 5% cut from the pot
 
-- `frontend/` - Contains the main React application
-  - `backend/` - Contains the Socket.io server for multiplayer functionality
-  - `src/` - React source code
-    - `components/` - Game components
-    - `utils/` - Utility functions including socketService.ts
+## 🌍 Market Opportunity
 
-## Implementation Details
+| Market Type               | Size    | Description                         |
+| ------------------------- | ------- | ----------------------------------- |
+| TAM (Total Gaming Market) | $282.3B | All gamers globally                 |
+| SAM (Web3 Gaming)         | $30B    | Blockchain-enabled games            |
+| SOM (0.1% Share)          | $30M    | Focused on meme + degen communities |
 
-- Frontend: React, Vite, Three.js
-- Backend: Node.js, Express, Socket.io
-- Blockchain: Solana with AppKit
+## 🛣️ Future Roadmap
 
-Note: For this demo, the SOL staking functionality is simulated. In a production environment, this would involve real blockchain transactions.
+- 🎨 Polishing UI/UX
+- 🤝 Collaborating with meme IPs
+- 📅 Introducing Seasonal Events & Leaderboards
+- 🔀 Launching Cross-Chain Compatibility
+- ⚡ Integrating MagicBlock for real-time performance
+- 🎲 Using Switchboard VRF for verifiable randomness
 
-## Environment Setup
+## 🛠 Tech Stack
 
-This project requires a Solana private key for treasury operations. For security reasons, the key is not included in the repository.
+- Frontend: React + Vite + Three.js
+- Blockchain: Solana + Anchor Framework
+- Token & NFTs: Custom SPL tokens, Metaplex NFT standard
+- Design: Pixel art with minimalist vibes
 
-### Setting up the Treasury Key
+## 📦 Installation
 
-1. Create a `.env` file in the `frontend/backend` directory with:
+```bash
+# Clone the repo
+git clone https://github.com/EmoBanana/solitary-meme-td.git
+cd solitary-meme-td/frontend
 
-   ```
-   TREASURY_SECRET_KEY="your_solana_private_key_here"
-   ```
+# Install dependencies
+npm install
 
-2. Alternatively, set the environment variable directly in your terminal:
-   - Windows: `set TREASURY_SECRET_KEY=your_private_key_here`
-   - Linux/Mac: `export TREASURY_SECRET_KEY=your_private_key_here`
+# Start development server
+npm run dev
+```
 
-For more detailed security guidelines, refer to the [SECURITY.md](SECURITY.md) file.
+## Contributing
+
+We welcome contributions! Feel free to submit issues or pull requests to improve Adsolute.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Made with ❤️
