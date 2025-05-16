@@ -78,6 +78,82 @@ declare namespace JSX {
       React.FormHTMLAttributes<HTMLFormElement>,
       HTMLFormElement
     >;
+    label: React.DetailedHTMLProps<
+      React.LabelHTMLAttributes<HTMLLabelElement>,
+      HTMLLabelElement
+    >;
+    img: React.DetailedHTMLProps<
+      React.ImgHTMLAttributes<HTMLImageElement>,
+      HTMLImageElement
+    >;
+    section: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLElement>,
+      HTMLElement
+    >;
+    article: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLElement>,
+      HTMLElement
+    >;
+    aside: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLElement>,
+      HTMLElement
+    >;
+    ul: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLUListElement>,
+      HTMLUListElement
+    >;
+    ol: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLOListElement>,
+      HTMLOListElement
+    >;
+    li: React.DetailedHTMLProps<
+      React.LiHTMLAttributes<HTMLLIElement>,
+      HTMLLIElement
+    >;
+    textarea: React.DetailedHTMLProps<
+      React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+      HTMLTextAreaElement
+    >;
+    select: React.DetailedHTMLProps<
+      React.SelectHTMLAttributes<HTMLSelectElement>,
+      HTMLSelectElement
+    >;
+    option: React.DetailedHTMLProps<
+      React.OptionHTMLAttributes<HTMLOptionElement>,
+      HTMLOptionElement
+    >;
+    table: React.DetailedHTMLProps<
+      React.TableHTMLAttributes<HTMLTableElement>,
+      HTMLTableElement
+    >;
+    tr: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLTableRowElement>,
+      HTMLTableRowElement
+    >;
+    td: React.DetailedHTMLProps<
+      React.TdHTMLAttributes<HTMLTableDataCellElement>,
+      HTMLTableDataCellElement
+    >;
+    th: React.DetailedHTMLProps<
+      React.ThHTMLAttributes<HTMLTableHeaderCellElement>,
+      HTMLTableHeaderCellElement
+    >;
+    thead: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLTableSectionElement>,
+      HTMLTableSectionElement
+    >;
+    tbody: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLTableSectionElement>,
+      HTMLTableSectionElement
+    >;
+    tfoot: React.DetailedHTMLProps<
+      React.HTMLAttributes<HTMLTableSectionElement>,
+      HTMLTableSectionElement
+    >;
+    style: React.DetailedHTMLProps<
+      React.StyleHTMLAttributes<HTMLStyleElement>,
+      HTMLStyleElement
+    >;
     // SVG elements
     svg: React.SVGProps<SVGSVGElement>;
     path: React.SVGProps<SVGPathElement>;
@@ -89,3 +165,5 @@ declare namespace JSX {
     // Add more HTML elements as needed
   }
 }
+
+export {};

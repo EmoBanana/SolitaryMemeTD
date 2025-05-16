@@ -1,20 +1,6 @@
 import React from "react";
 import UpgradeCard, { UpgradeSection } from "./UpgradeCard";
 
-// Add JSX namespace declaration to fix linter errors
-declare namespace JSX {
-  interface IntrinsicElements {
-    div: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLDivElement>,
-      HTMLDivElement
-    >;
-    style: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLStyleElement>,
-      HTMLStyleElement
-    >;
-  }
-}
-
 const UpgradeCardExample: React.FC = () => {
   // Sample data for demo purposes
   const attackCards = [

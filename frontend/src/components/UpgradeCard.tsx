@@ -1,23 +1,5 @@
 import React from "react";
 
-// Add JSX namespace declaration to fix linter errors
-declare namespace JSX {
-  interface IntrinsicElements {
-    div: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLDivElement>,
-      HTMLDivElement
-    >;
-    span: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLSpanElement>,
-      HTMLSpanElement
-    >;
-    img: React.DetailedHTMLProps<
-      React.ImgHTMLAttributes<HTMLImageElement>,
-      HTMLImageElement
-    >;
-  }
-}
-
 type UpgradeCardProps = {
   label: string;
   currentValue: string | number;
@@ -36,7 +18,7 @@ const UpgradeCard: React.FC<UpgradeCardProps> = ({
   category = "attack",
   affordable = true,
   description = "",
-}) => {
+}: UpgradeCardProps) => {
   // Determine background color based on category
   const getCategoryColor = () => {
     switch (category) {
@@ -158,7 +140,15 @@ export const UpgradeSection: React.FC<{
   title: string;
   category: "attack" | "defense" | "utility";
   children: React.ReactNode;
-}> = ({ title, category, children }) => {
+}> = ({
+  title,
+  category,
+  children,
+}: {
+  title: string;
+  category: "attack" | "defense" | "utility";
+  children: React.ReactNode;
+}) => {
   const getCategoryColor = () => {
     switch (category) {
       case "attack":
