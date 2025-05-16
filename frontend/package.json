@@ -17,7 +17,11 @@
     "util": false,
     "http": false,
     "https": false,
-    "os": false
+    "os": false,
+    "fs": false,
+    "path": "path-browserify",
+    "zlib": "browserify-zlib",
+    "buffer": "buffer"
   },
   "dependencies": {
     "@civic/auth": "^0.5.4",

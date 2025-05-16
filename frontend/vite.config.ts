@@ -30,13 +30,17 @@ export default defineConfig({
     extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
       "@": resolve(__dirname, "src"),
-      "@project-serum/anchor": resolve(__dirname, "src/anchor-browser.ts"),
-      "@coral-xyz/anchor": resolve(__dirname, "src/coral-anchor-browser.ts"),
     },
+    dedupe: [
+      "react",
+      "react-dom",
+      "@project-serum/anchor",
+      "@coral-xyz/anchor",
+    ],
   },
   define: {
     "process.env": {},
-    global: "globalThis",
+    global: "window",
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -45,7 +49,14 @@ export default defineConfig({
         global: "globalThis",
       },
     },
-    include: ["@project-serum/anchor", "@coral-xyz/anchor", "@solana/web3.js"],
+    include: [
+      "@project-serum/anchor",
+      "@coral-xyz/anchor",
+      "@solana/web3.js",
+      "buffer",
+      "react",
+      "react-dom",
+    ],
   },
   build: {
     commonjsOptions: {
@@ -53,6 +64,13 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ["crypto", "stream", "assert", "util"],
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          anchor: ["@project-serum/anchor", "@coral-xyz/anchor"],
+          solana: ["@solana/web3.js"],
+        },
+      },
     },
   },
 });

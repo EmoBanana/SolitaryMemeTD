@@ -1,5 +1,7 @@
-// Import polyfills first
-import "./polyfills";
+// Import initialization first
+import "./libs/init";
+
+// Then polyfills and shims
 import "./shims";
 
 // Import other modules
