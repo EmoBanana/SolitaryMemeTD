@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import * as web3 from "@solana/web3.js";
 import * as anchor from "../anchor-browser";
