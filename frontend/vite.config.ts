@@ -19,6 +19,11 @@ export default defineConfig({
         "crypto",
         "assert",
       ],
+      globals: {
+        Buffer: true,
+        global: true,
+        process: true,
+      },
     }),
   ],
   resolve: {
@@ -29,7 +34,7 @@ export default defineConfig({
   },
   define: {
     "process.env": {},
-    global: {},
+    global: "globalThis",
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -48,7 +53,6 @@ export default defineConfig({
       external: [
         "@project-serum/anchor",
         "@coral-xyz/anchor",
-        "buffer",
         "crypto",
         "stream",
         "assert",

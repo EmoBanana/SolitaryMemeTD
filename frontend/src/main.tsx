@@ -1,4 +1,5 @@
-// Import shims and polyfills first
+// Import polyfills first
+import "./polyfills";
 import "./shims";
 
 // Import other modules
@@ -7,8 +8,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-// Required for Solana
-import { Buffer } from "buffer";
-window.Buffer = Buffer;
+// Buffer is now handled by the polyfills file
 
 ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
