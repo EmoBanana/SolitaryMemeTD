@@ -10,6 +10,15 @@
     "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "browser": {
+    "crypto": false,
+    "stream": "stream-browserify",
+    "assert": false,
+    "util": false,
+    "http": false,
+    "https": false,
+    "os": false
+  },
   "dependencies": {
     "@civic/auth": "^0.5.4",
     "@civic/auth-web3": "^0.5.8",
@@ -42,6 +51,7 @@
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.21",
+    "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "eslint": "^9.22.0",
     "eslint-plugin-react-hooks": "^5.2.0",
@@ -49,9 +59,12 @@
     "globals": "^16.0.0",
     "postcss": "^8.5.3",
     "process": "^0.11.10",
+    "stream-browserify": "^3.0.0",
     "tailwindcss": "^4.1.5",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
-    "vite": "^6.3.1"
+    "util": "^0.12.5",
+    "vite": "^6.3.1",
+    "vite-plugin-node-polyfills": "^0.23.0"
   }
 }
