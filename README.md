@@ -105,3 +105,21 @@ The project is organized as follows:
 - Blockchain: Solana with AppKit
 
 Note: For this demo, the SOL staking functionality is simulated. In a production environment, this would involve real blockchain transactions.
+
+## Environment Setup
+
+This project requires a Solana private key for treasury operations. For security reasons, the key is not included in the repository.
+
+### Setting up the Treasury Key
+
+1. Create a `.env` file in the `frontend/backend` directory with:
+
+   ```
+   TREASURY_SECRET_KEY="your_solana_private_key_here"
+   ```
+
+2. Alternatively, set the environment variable directly in your terminal:
+   - Windows: `set TREASURY_SECRET_KEY=your_private_key_here`
+   - Linux/Mac: `export TREASURY_SECRET_KEY=your_private_key_here`
+
+For more detailed security guidelines, refer to the [SECURITY.md](SECURITY.md) file.
