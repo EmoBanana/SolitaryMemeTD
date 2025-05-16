@@ -2,58 +2,7 @@ import React from "react";
 import { useAppKitAccount, useDisconnect } from "@reown/appkit/react";
 import { Connection, PublicKey } from "@solana/web3.js";
 import { useNavigate } from "react-router-dom";
-import "../react-override.d"; // Import the JSX type definitions
 import UpgradeCardExample from "./UpgradeCardExample";
-
-// Add JSX namespace declaration to fix linter errors
-declare namespace JSX {
-  interface IntrinsicElements {
-    div: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLDivElement>,
-      HTMLDivElement
-    >;
-    header: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLElement>,
-      HTMLElement
-    >;
-    nav: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLElement>,
-      HTMLElement
-    >;
-    a: React.DetailedHTMLProps<
-      React.AnchorHTMLAttributes<HTMLAnchorElement>,
-      HTMLAnchorElement
-    >;
-    span: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLSpanElement>,
-      HTMLSpanElement
-    >;
-    button: React.DetailedHTMLProps<
-      React.ButtonHTMLAttributes<HTMLButtonElement>,
-      HTMLButtonElement
-    >;
-    main: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLElement>,
-      HTMLElement
-    >;
-    h2: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLHeadingElement>,
-      HTMLHeadingElement
-    >;
-    h3: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLHeadingElement>,
-      HTMLHeadingElement
-    >;
-    p: React.DetailedHTMLProps<
-      React.HTMLAttributes<HTMLParagraphElement>,
-      HTMLParagraphElement
-    >;
-    img: React.DetailedHTMLProps<
-      React.ImgHTMLAttributes<HTMLImageElement>,
-      HTMLImageElement
-    >;
-  }
-}
 
 interface HomeProps {
   onDisconnect: () => void;
