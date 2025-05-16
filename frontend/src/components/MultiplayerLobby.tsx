@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAppKitAccount } from "@reown/appkit/react";
 import socketService from "../utils/socketService";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { anchor } from "../utils/anchor-helpers";
 import * as web3 from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
 import idl from "../../../idl.json";
 import {
   TREASURY_ADDRESS,

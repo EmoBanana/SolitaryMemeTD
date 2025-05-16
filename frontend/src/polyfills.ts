@@ -17,3 +17,11 @@ window.process = process;
 if (typeof window.global === "undefined") {
   window.global = window;
 }
+
+// Initialize anchor in the browser
+import { setupAnchorForBrowser } from "./utils/anchor-helpers";
+try {
+  setupAnchorForBrowser();
+} catch (error) {
+  console.warn("Failed to initialize Anchor:", error);
+}

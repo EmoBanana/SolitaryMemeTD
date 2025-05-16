@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { create } from "zustand";
 // Import Solana web3 modules
 import * as web3 from "@solana/web3.js";
-import * as anchor from "@project-serum/anchor";
+import { anchor, setupAnchorForBrowser } from "../utils/anchor-helpers";
 import idl from "../../../idl.json";
 
 // Extend Window interface to include our global variables
