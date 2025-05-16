@@ -1,6 +1,6 @@
 import React from "react";
 
-type UpgradeCardProps = {
+interface UpgradeCardProps {
   label: string;
   currentValue: string | number;
   nextValue: string | number;
@@ -8,9 +8,10 @@ type UpgradeCardProps = {
   category?: "attack" | "defense" | "utility";
   affordable?: boolean;
   description?: string;
-};
+  onClick?: () => void;
+}
 
-const UpgradeCard: React.FC<UpgradeCardProps> = ({
+function UpgradeCard({
   label,
   currentValue,
   nextValue,
@@ -18,7 +19,8 @@ const UpgradeCard: React.FC<UpgradeCardProps> = ({
   category = "attack",
   affordable = true,
   description = "",
-}: UpgradeCardProps) => {
+  onClick,
+}: UpgradeCardProps) {
   // Determine background color based on category
   const getCategoryColor = () => {
     switch (category) {
@@ -48,6 +50,7 @@ const UpgradeCard: React.FC<UpgradeCardProps> = ({
 
   return (
     <div
+      onClick={onClick}
       style={{
         margin: 8,
         padding: "15px",
@@ -133,22 +136,20 @@ const UpgradeCard: React.FC<UpgradeCardProps> = ({
       </div>
     </div>
   );
-};
+}
 
 // Upgrade section component that groups cards
-export const UpgradeSection: React.FC<{
+interface UpgradeSectionProps {
   title: string;
   category: "attack" | "defense" | "utility";
   children: React.ReactNode;
-}> = ({
+}
+
+export function UpgradeSection({
   title,
   category,
   children,
-}: {
-  title: string;
-  category: "attack" | "defense" | "utility";
-  children: React.ReactNode;
-}) => {
+}: UpgradeSectionProps) {
   const getCategoryColor = () => {
     switch (category) {
       case "attack":
@@ -194,6 +195,6 @@ export const UpgradeSection: React.FC<{
       </div>
     </div>
   );
-};
+}
 
 export default UpgradeCard;

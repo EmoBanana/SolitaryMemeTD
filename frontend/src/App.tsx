@@ -12,7 +12,6 @@ import Home from "./components/Home";
 import Game from "./components/Game";
 import MultiplayerLobby from "./components/MultiplayerLobby";
 import MultiplayerGame from "./components/MultiplayerGame";
-import AssertTest from "./components/AssertTest";
 import { createAppKit, useAppKitAccount } from "@reown/appkit/react";
 import { SolanaAdapter } from "@reown/appkit-adapter-solana/react";
 import { solana, solanaTestnet, solanaDevnet } from "@reown/appkit/networks";
@@ -211,7 +210,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/test-assert" element={<AssertTest />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

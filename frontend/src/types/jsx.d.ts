@@ -1,6 +1,7 @@
 // This file provides global JSX declarations for TypeScript
 // It enables use of all HTML elements in React components without needing to declare them individually
 
+import * as React from "react";
 import React from "react";
 
 declare global {
@@ -26,6 +27,18 @@ declare global {
         React.HTMLAttributes<HTMLSpanElement>,
         HTMLSpanElement
       >;
+      img: React.DetailedHTMLProps<
+        React.ImgHTMLAttributes<HTMLImageElement>,
+        HTMLImageElement
+      >;
+      a: React.DetailedHTMLProps<
+        React.AnchorHTMLAttributes<HTMLAnchorElement>,
+        HTMLAnchorElement
+      >;
+      p: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLParagraphElement>,
+        HTMLParagraphElement
+      >;
       h1: React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLHeadingElement>,
         HTMLHeadingElement
@@ -38,25 +51,41 @@ declare global {
         React.HTMLAttributes<HTMLHeadingElement>,
         HTMLHeadingElement
       >;
-      p: React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLParagraphElement>,
-        HTMLParagraphElement
+      h4: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLHeadingElement>,
+        HTMLHeadingElement
       >;
-      input: React.DetailedHTMLProps<
-        React.InputHTMLAttributes<HTMLInputElement>,
-        HTMLInputElement
+      h5: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLHeadingElement>,
+        HTMLHeadingElement
+      >;
+      h6: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLHeadingElement>,
+        HTMLHeadingElement
       >;
       button: React.DetailedHTMLProps<
         React.ButtonHTMLAttributes<HTMLButtonElement>,
         HTMLButtonElement
       >;
-      a: React.DetailedHTMLProps<
-        React.AnchorHTMLAttributes<HTMLAnchorElement>,
-        HTMLAnchorElement
+      input: React.DetailedHTMLProps<
+        React.InputHTMLAttributes<HTMLInputElement>,
+        HTMLInputElement
       >;
-      img: React.DetailedHTMLProps<
-        React.ImgHTMLAttributes<HTMLImageElement>,
-        HTMLImageElement
+      textarea: React.DetailedHTMLProps<
+        React.TextareaHTMLAttributes<HTMLTextAreaElement>,
+        HTMLTextAreaElement
+      >;
+      select: React.DetailedHTMLProps<
+        React.SelectHTMLAttributes<HTMLSelectElement>,
+        HTMLSelectElement
+      >;
+      form: React.DetailedHTMLProps<
+        React.FormHTMLAttributes<HTMLFormElement>,
+        HTMLFormElement
+      >;
+      label: React.DetailedHTMLProps<
+        React.LabelHTMLAttributes<HTMLLabelElement>,
+        HTMLLabelElement
       >;
       header: React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLElement>,
@@ -70,35 +99,40 @@ declare global {
         React.HTMLAttributes<HTMLElement>,
         HTMLElement
       >;
-      label: React.DetailedHTMLProps<
-        React.LabelHTMLAttributes<HTMLLabelElement>,
-        HTMLLabelElement
+      section: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
       >;
-      svg: React.SVGProps<SVGSVGElement>;
-      path: React.SVGProps<SVGPathElement>;
-      br: React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLBRElement>,
-        HTMLBRElement
+      article: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
       >;
-      // Add other JSX elements as needed
+      aside: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+      footer: React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      >;
+      canvas: React.DetailedHTMLProps<
+        React.CanvasHTMLAttributes<HTMLCanvasElement>,
+        HTMLCanvasElement
+      >;
+      // Include any other specific elements you need
 
       // Fallback for any other HTML elements
       [elemName: string]: React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLElement>,
         HTMLElement
       >;
+
+      // Additional elements
+      svg: any;
+      path: any;
+      br: any;
     }
   }
 }
 
-// Fix React useState error
-declare module "react" {
-  // Ensure all React hooks are properly recognized
-  export function useState<T>(
-    initialState: T | (() => T)
-  ): [T, (newState: T | ((prevState: T) => T)) => void];
-  export function useEffect(
-    effect: () => void | (() => void),
-    deps?: ReadonlyArray<any>
-  ): void;
-}
+export {};

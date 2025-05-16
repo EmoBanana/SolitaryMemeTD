@@ -17,17 +17,12 @@
     "util": false,
     "http": false,
     "https": false,
-    "os": false,
-    "fs": false,
-    "path": "path-browserify",
-    "zlib": "browserify-zlib",
-    "buffer": "buffer"
+    "os": false
   },
   "dependencies": {
     "@civic/auth": "^0.5.4",
     "@civic/auth-web3": "^0.5.8",
     "@coral-xyz/anchor": "^0.31.1",
-    "@project-serum/anchor": "^0.26.0",
     "@react-three/drei": "^10.0.7",
     "@react-three/fiber": "^9.1.2",
     "@reown/appkit": "^1.7.4",
