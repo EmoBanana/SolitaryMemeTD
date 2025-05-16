@@ -30,6 +30,8 @@ export default defineConfig({
     extensions: [".js", ".jsx", ".ts", ".tsx"],
     alias: {
       "@": resolve(__dirname, "src"),
+      "@project-serum/anchor": resolve(__dirname, "src/anchor-browser.ts"),
+      "@coral-xyz/anchor": resolve(__dirname, "src/coral-anchor-browser.ts"),
     },
   },
   define: {
